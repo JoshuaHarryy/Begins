@@ -1,19 +1,26 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import useOrientation from '../Hooks/useOrientation';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ExpenseScreen() {
+  const orientation = useOrientation();
+  const navigation = useNavigation();
   return (
     <View>
       <ScrollView>
       <View style={styles.Seconddesign}>
         <LinearGradient colors={['#A8C8D7', '#80DEC3']} style={styles.Headercontainer}>
           <View style={styles.RowText}>
+          <TouchableOpacity onPress={() => navigation.navigate("Home")}>
           <MaterialIcons name={"arrow-back-ios"} size={24} color={"#505050"} style={styles.ArrowIcon} />
-          <Text style={styles.HeaderText}>Expenses Report</Text>
+          </TouchableOpacity>
+          <Text style={orientation === 'landscape' ? styles.ExpenseTextLandscape : styles.ExpenseTextPortrait}>Expenses Report</Text>
+         
           </View>
           <View style={styles.CenterUnderLineView}>
           <View style={styles.underline}></View>
@@ -81,6 +88,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
     borderBottomLeftRadius: 20,
     elevation: 15,
+    position: 'relative',
   },
   RowText:{
     flexDirection: 'row',
@@ -90,12 +98,25 @@ const styles = StyleSheet.create({
     marginHorizontal: moderateScale(20),
     color: '#005C89',
   },
-  HeaderText: {
+  ExpenseTextLandscape:{
     fontSize: scale(23),
     fontWeight: 'bold',
     color: '#005C89',
-    marginHorizontal: moderateScale(40),
-    marginTop: verticalScale(54)
+    position: 'absolute', // Absolute positioning
+        left: '50%', // Centers the text horizontally based on the container
+        transform: [{ translateX: -105 }], // Adjusts the centering
+        top: 58, // Align the text vertically as needed
+        // Other styling for the text
+  },
+  ExpenseTextPortrait: {
+    fontSize: scale(23),
+    fontWeight: 'bold',
+    color: '#005C89',
+    position: 'absolute', // Absolute positioning
+        left: '50%', // Centers the text horizontally based on the container
+        transform: [{ translateX: -105 }], // Adjusts the centering
+        top: 59, // Align the text vertically as needed
+        // Other styling for the text
   },
   CenterUnderLineView:{
     flex: 1,
@@ -177,7 +198,8 @@ const styles = StyleSheet.create({
     width: moderateScale(323),
     height: verticalScale(161),
     borderRadius: 30,
-    elevation: 10
+    elevation: 10,
+    marginBottom: verticalScale(40)
   },
   mywalletText: {
   fontSize: scale(17),

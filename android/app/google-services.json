@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1081204046823",
+    "project_id": "begins-c3fd5",
+    "storage_bucket": "begins-c3fd5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081204046823:android:e82a0af163482058201b42",
+        "android_client_info": {
+          "package_name": "com.begins"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFeNLmpq8s1qcvowG5Ep42PWgOCxhBECE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

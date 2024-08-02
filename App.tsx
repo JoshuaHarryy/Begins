@@ -15,6 +15,7 @@ import IFTAScreen from './src/screens/IFTAScreen';
 import ExpenseScreen from './src/screens/ExpenseScreen';
 import ElectronicLogScreen from './src/screens/ElectronicLogScreen';
 
+
 const Stack = createNativeStackNavigator();
 
 const App = () => {

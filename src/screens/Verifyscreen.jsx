@@ -2,8 +2,11 @@ import { StyleSheet, Text, View, Image, Touchable, TouchableOpacity, ScrollView 
 import React from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import useOrientation from '../Hooks/useOrientation';
+
 
 export default function Verifyscreen() {
+  const orientation = useOrientation();
   const navigation = useNavigation();
 
   const HandleHome = () => {
@@ -15,7 +18,7 @@ export default function Verifyscreen() {
       
       <View>
       <View style={styles.IconView}>
-        <Image source={require("../screens/Assets/verifyDone.png")} style={styles.imageTop} />
+        <Image source={require("../screens/Assets/verifyDone.png")} style={orientation === 'landscape' ? styles.imageTopLandscape : styles.imageTopPortrait} />
       </View>
       <View style={styles.TextConatiner}>
         <Text style={styles.VerifyText}>Verification Successful!</Text>
@@ -27,7 +30,7 @@ export default function Verifyscreen() {
 
       <View style={styles.ContinueView}>
       <TouchableOpacity onPress={HandleHome}>
-        <View style={styles.ContinueConatiner}>
+        <View style={orientation === 'landscape' ? styles.ContinueConatinerLandscape : styles.ContinueConatinerPortrait}>
           <Text style={styles.ContinueText}>Continue</Text>
         </View>
       </TouchableOpacity>
@@ -45,7 +48,12 @@ const styles = StyleSheet.create({
   IconView: {
     alignItems: 'center',
   },
-  imageTop: {
+  imageTopLandscape: {
+    width: 100,
+    height: 100,
+    marginTop: verticalScale(30)
+  },
+  imageTopPortrait: {
     width: 80,
     height: 80,
     marginTop: 270
@@ -64,8 +72,19 @@ const styles = StyleSheet.create({
   },
   ContinueView:{
     alignItems:  'center',
+    
   },
-  ContinueConatiner: {
+  ContinueConatinerLandscape:{
+    width: 343.79,
+    height: 59.73,
+    backgroundColor: '#005C89',
+    borderRadius: 102,
+    elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(15)
+  },
+  ContinueConatinerPortrait: {
     width: 343.79,
     height: 59.73,
     backgroundColor: '#005C89',

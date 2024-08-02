@@ -1,52 +1,79 @@
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Dimensions,Alert } from 'react-native'
 import React from 'react'
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { moderateScale, moderateVerticalScale, verticalScale, scale } from 'react-native-size-matters';
-
-const Loginscreen = () => {
-
-  const navigation = useNavigation();
-
-  const Handleregister = () => {
-
-    navigation.navigate("Signup");
+import { useDimensions, useDeviceOrientation } from '@react-native-community/hooks';
+import useOrientation from '../Hooks/useOrientation';
+import auth from '@react-native-firebase/auth';
+import { useState } from 'react';
 
 
-  }
+const Loginscreen = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSignIn = () => {
+    auth()
+      .signInWithEmailAndPassword(email, password)
+      .then(userCredentials => {
+        Alert.alert("Login In successful!")
+        console.log(userCredentials.user.email);
+        navigation.navigate('Home');
+      })
+      .catch(error => {
+        Alert.alert("Email & password are incorrect")
+        console.log(error)
+        setError(error.message);
+      });
+  };
+
+
+  const orientation = useOrientation();
   return (
 
-    <View style={styles.container}>
-      <ScrollView>
+    <ScrollView contentContainerStyle={styles.container}>
+      
         <View>
-          <View style={styles.ImageTopContainer}>
-            <Image source={require("../screens/Assets/HeaderRoad.png")} style={styles.imageTop} />
+          <View style={orientation === 'landscape' ? styles.imageContainerLandscape : styles.imageContainerPortrait}>
+            <Image source={require("../screens/Assets/HeaderRoad.png")}style={orientation === 'landscape' ? styles.imageTopLandscape : styles.imageTopPortrait} />
           </View>
-          <View style={styles.hello}>
+          <View style={orientation === 'landscape' ? styles.HelloLandscape : styles.helloPortrait}>
             <Text style={styles.helloText}>Welcome back!</Text>
           </View>
           <View style={styles.inputView}>
             <View style={styles.inputContainer}>
               <AntDesign name={"mail"} size={24} color={"#757575"} style={styles.inputIcon} />
-              <TextInput style={styles.Textinput} placeholder='Email Address' placeholderTextColor={'#757575'} />
+              <TextInput style={styles.Textinput}
+              value={email}
+              onChangeText={value=> setEmail(value)} 
+              placeholder='Email Address' 
+              placeholderTextColor={'#757575'} />
             </View>
             <View style={styles.inputContainer2}>
               <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
-              <TextInput style={styles.Textinput} placeholder='Password' secureTextEntry placeholderTextColor={'#757575'} />
+              <TextInput style={styles.Textinput} 
+              value={password}
+              onChangeText={value=> setPassword(value)}
+              placeholder='Password' 
+              secureTextEntry 
+              placeholderTextColor={'#757575'} />
             </View>
           </View>
           <TouchableOpacity>
-            <Text style={styles.ForgetPasswordtext}>Forgot Password?</Text>
+            <Text style={orientation === 'landscape' ? styles.ForgetPassLandscape : styles.ForgetPassPortrait}>Forgot Password?</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('OTP')}>
+
+          <TouchableOpacity onPress={handleSignIn}>
             <View style={styles.LoginView}>
               <View style={styles.logincontainer}>
                 <Text style={styles.loginText}>Log In</Text>
               </View>
             </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
           <View style={styles.connectView}>
             <Text style={styles.connect}>Or connect via</Text>
           </View>
@@ -60,18 +87,19 @@ const Loginscreen = () => {
             </View>
           </SafeAreaView>
         </View>
-        </ScrollView>
+       
       
 
-      <View style={styles.FooterContainer}>
-        <TouchableOpacity onPress={Handleregister}>
+      <View style={orientation === 'landscape' ? styles.FooterContainerLandscape : styles.FooterContainerPortrait}>
+        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
           <Text style={styles.baseText}>
             <Text style={styles.FirstFooterText}>Don’t have an account? </Text>
             <Text style={styles.secondFooterText}> Register</Text>
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+      
+      </ScrollView>
 
   )
 }
@@ -81,25 +109,38 @@ export default Loginscreen
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    flex: 1,
     justifyContent: 'space-between',
+    flexGrow: 1,
   },
-  ImageTopContainer: {
+  imageContainerLandscape:{
+     height: verticalScale(50),
+    marginTop: verticalScale(1),
+    flexDirection: 'row',
+  },
+  imageContainerPortrait: {
     height: verticalScale(50),
     marginTop: verticalScale(10),
     flexDirection: 'row',
   },
-  imageTop: {
+  imageTopLandscape:{
+    width: '100%',
+    height: verticalScale(200),
+  },
+  imageTopPortrait: {
     width: '100%',
     height: verticalScale(120)
   },
   imageLine: {
     width: 46.53,
   },
-  hello: {
+  HelloLandscape:{
+    alignItems: 'center',
+    marginTop: 170,
+    marginBottom: verticalScale(20),
+  },
+  helloPortrait: {
     paddingHorizontal: moderateScale(35),
-    fontSize: 20,
-    marginTop: 115
+    marginTop: 115,
   },
   helloText: {
     fontSize: scale(25),
@@ -144,7 +185,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#757575',
   },
-  ForgetPasswordtext: {
+  ForgetPassLandscape:{
+    color: '#00A170',
+    fontSize: 16,
+    marginHorizontal: moderateScale(80),
+    marginTop: verticalScale(30),
+  },
+
+  ForgetPassPortrait: {
     color: '#00A170',
     fontSize: 16,
     marginHorizontal: moderateScale(35),
@@ -190,7 +238,7 @@ const styles = StyleSheet.create({
 
   googlebox: {
     color: '#FFFFFF',
-    width: "28%",
+    width: "25%",
     height: 50,
     borderWidth: 1,
     borderColor: '#00A170',
@@ -201,7 +249,7 @@ const styles = StyleSheet.create({
   },
   Facebookbox: {
     color: '#FFFFFF',
-    width: "28%",
+    width: "25%",
     height: 50,
     borderWidth: 1,
     borderColor: '#00A170',
@@ -209,7 +257,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  FooterContainer: {
+  FooterContainerLandscape:{
+    width: "100%",
+    height: 59,
+    backgroundColor: '#E8F3F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 10,
+    marginTop: verticalScale(50)
+  },
+  FooterContainerPortrait: {
     width: "100%",
     height: 59,
     backgroundColor: '#E8F3F2',

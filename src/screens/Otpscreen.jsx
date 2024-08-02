@@ -1,9 +1,13 @@
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import useOrientation from '../Hooks/useOrientation';
+
+
 export default function Otpscreen() {
+  const orientation = useOrientation();
   const navigation = useNavigation();
 
   const Handleverify= ()=> {
@@ -12,13 +16,17 @@ export default function Otpscreen() {
   }
   
   return (
-    <View style={styles.MainView}>
+    
+    <View style={orientation === 'landscape' ? styles.MainViewLandscape : styles.MainViewPortrait}>
+      
       <View>
-      <MaterialIcons name={"arrow-back-ios"} size={24} color={"#505050"} style={styles.ArrowIcon}/>
-    <View style={styles.HeaderConatiner}>
+      <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+      <MaterialIcons name={"arrow-back-ios"} size={24} color={"#505050"} style={orientation === 'landscape' ? styles.ArrowIconLandscape : styles.ArrowIconPortrait}/>
+      </TouchableOpacity>
+    <View style={orientation === 'landscape' ? styles.HeadertextLandscape : styles.HeadertextPortrait}>
       <Text style={styles.Headertext}>OTP Verification</Text>
     </View>
-    <View style={styles.text2container}>
+    <View style={orientation === 'landscape' ? styles.text2containerLandscape : styles.text2containerPortrait}>
       <Text style={styles.text2}>Enter the verification code we just sent to your email johndoe@email.com</Text>
     </View>
     <View style={styles.BoxContainer}> 
@@ -41,33 +49,44 @@ export default function Otpscreen() {
         <TextInput style={styles.box6} placeholder='0'placeholderTextColor={"black"}/>
       </View>
     </View>
-    <Text style={styles.baseText}>
+    <View style={styles.baseText}>
           <Text style={styles.FirstLineText}>Didn’t receive code?  </Text>
           <Text style={styles.secondLineText}>Resend</Text>
-        </Text>
         </View>
-        <View style={styles.VerifyView}>
+        </View>
+        <View style={orientation === 'landscape' ? styles.verifyViewLandscape : styles.verifyViewPortrait}>
         <TouchableOpacity onPress={Handleverify}>
-        <View style={styles.verifyConatiner}> 
+        <View style={orientation === 'landscape' ? styles.verifyConatinerLandscape : styles.verifyConatinerPortrait}> 
           <Text style={styles.verifyText}>verify</Text>
         </View>
         </TouchableOpacity>
         </View>
+        
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  MainView:{
+  MainViewLandscape:{
+    flex: 1,
+  },
+  MainViewPortrait:{
     flex:1,
     justifyContent: 'space-between',
   },
-  HeaderConatiner:{
+  HeadertextLandscape:{
+    alignItems: 'center'
+  },
+  HeadertextPortrait:{
     marginHorizontal : moderateScale(30),
     marginTop : 70,
     
   },
-  ArrowIcon:{
+  ArrowIconLandscape: {
+    marginHorizontal: moderateScale(40),
+    marginTop: verticalScale(20)
+  },
+  ArrowIconPortrait:{
     marginHorizontal: moderateScale(20),
     marginTop: verticalScale(40)
   },
@@ -80,7 +99,10 @@ const styles = StyleSheet.create({
   text2:{
   color: '#80807F',
   },
-  text2container:{
+  text2containerLandscape:{
+    alignItems:'center'
+  },
+  text2containerPortrait:{
     marginHorizontal : moderateScale(30),
   },
   BoxContainer:{
@@ -155,8 +177,10 @@ const styles = StyleSheet.create({
   },
   baseText:{
     fontSize:15,
-    marginHorizontal: 100,
-    marginTop: 40
+    justifyContent: 'center',
+    marginTop: 40,
+    flexDirection: 'row',
+    marginBottom: verticalScale(20)
   },
   FirstLineText:{
     color: '#606060',
@@ -166,10 +190,24 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     fontWeight: '600',
   },
-  VerifyView:{
+  verifyViewLandscape:{
+    alignItems:  'center',
+    marginBottom: 50
+  },
+  verifyViewPortrait:{
     alignItems:  'center',
   },
-   verifyConatiner:{
+  verifyConatinerLandscape:{
+    width: 343.79,
+    height: 59.73,
+    backgroundColor : '#007959',
+    borderRadius: 102,
+    elevation : 2,
+    alignItems :'center',
+    justifyContent : 'center',
+    marginBottom: 100
+  },
+  verifyConatinerPortrait:{
     width: 343.79,
     height: 59.73,
     backgroundColor : '#007959',

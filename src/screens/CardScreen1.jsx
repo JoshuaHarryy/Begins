@@ -1,22 +1,186 @@
-import { StyleSheet, Text, View, ScrollView, Image } from 'react-native'
-import React from 'react'
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Button, TextInput,Alert} from 'react-native'
+import React, { useState } from 'react'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import useOrientation from '../Hooks/useOrientation';
+import { useNavigation } from '@react-navigation/native'
+import DocumentPicker from 'react-native-document-picker';
+import storage from '@react-native-firebase/storage';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { useEffect } from 'react'
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+
+
+const SignupSchema = Yup.object().shape({
+    ein: Yup.string()
+      .min(3, 'Too Short!')
+      .max(15, 'Too Long!')
+      .required('please enter atleast 6 digits'),
+    authority: Yup.string()
+      .email('Invalid email')
+      .required('Please enter your email address'),
+    password: Yup.string()
+      .min(6)
+      .required('Please enter your password')
+      .required(
+        'Must contain minimum 6 characters'
+      )
+  
+  });
 
 export default function CardScreen1() {
+    const [name, setName] = useState('');
+    const [ein, setEin] = useState('');
+    const [authority, setAuthority] = useState('');
+    const [bradstreet, setBradstreet] = useState('');
+    const [mcNumber, setMcNumber] = useState('');
+    const [dotNumber, setDotNumber] = useState('');
+    const [email, setEmail] = useState(auth().currentUser.email); 
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const userId = auth().currentUser.uid;
+
+            try {
+                const userDoc = await firestore().collection('Users').doc(userId).get();
+
+                if (userDoc.exists) {
+                    const data = userDoc.data();
+                    setEin(data.ein);
+                    setAuthority(data.authority);
+                    setBradstreet(data.bradstreet);
+                    setMcNumber(data.mcNumber);
+                    setDotNumber(data.dotNumber);
+                    setEmail(data.email)
+                }
+            } catch (error) {
+                Alert.alert('Error', error.message);
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
+    const handleUpdate = async () => {
+        try {
+            if (
+                (ein && ein.length > 0) &&
+                (authority && authority.length > 0) &&
+                (bradstreet && bradstreet.length > 0) &&
+                (mcNumber && mcNumber.length > 0) &&
+                (dotNumber && dotNumber.length > 0)
+            ) {
+                const userId = auth().currentUser.uid;
+                const userData = {
+                    ein,
+                    authority,
+                    bradstreet,
+                    mcNumber,
+                    dotNumber,
+                    updatedAt: firestore.FieldValue.serverTimestamp(),
+                };
+
+                await firestore().collection('Users').doc(userId).set(userData, { merge: true });
+                Alert.alert("Profile updated successfully!");
+            } else {
+                Alert.alert('Please fill in all required fields');
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Error', error.message);
+        }
+    };
+
+    const [FileData, setFileData] = useState([]);
+
+    const selectDoc = async () => {
+        try {
+            const response = await DocumentPicker.pick({
+                type: [DocumentPicker.types.allFiles],
+                allowMultiSelection: true,
+                copyTo: "cachesDirectory"
+            });
+            setFileData(response);
+            console.log(response);
+            Alert.alert('Selected')
+        } catch (error) {
+            if (DocumentPicker.isCancel(error))
+                console.log("user cancelled the upload", error);
+            else
+                console.log(error);
+        }
+    };
+
+    const uploadFiles = async () => {
+        try {
+            if (FileData.length > 0) {
+                const uploadTasks = FileData.map(async (file) => {
+                    const reference = storage().ref('/Stocks/' + file.name);
+                    await reference.putFile(file.fileCopyUri);
+                    const downloadURL = await reference.getDownloadURL();
+                    return { name: file.name, url: downloadURL };
+                });
+
+                const uploadedFiles = await Promise.all(uploadTasks);
+                console.log("Uploaded files: ", uploadedFiles);
+
+
+                saveFileLocationsToFirestore(uploadedFiles);
+            } else {
+                console.log("No files selected");
+                Alert.alert('No file selected')
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const saveFileLocationsToFirestore = async (uploadedFiles) => {
+        try {
+            const user = auth().currentUser;
+            const userDoc = firestore().collection('Users').doc(user.uid);
+
+            await userDoc.set({
+                files: uploadedFiles,
+                updatedAt: firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+
+            console.log('File locations saved to Firestore successfully');
+            Alert.alert('Uploaded successfully')
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const orientation = useOrientation();
+    const navigation = useNavigation();
     return (
+        <Formik initialValues={{
+            ein: '',
+            authority: '',
+            bradsheet: '',
+            mcNumber: '',
+            dotNumber: '',
+          }}
+            validationSchema={SignupSchema}
+          >
+      
+            {({ values, errors, touched, handleChange, handleSubmit, setFieldTouched }) => (
         <View>
             <ScrollView style={styles.container}>
                 <LinearGradient colors={['#A8C8D7', '#80DEC3']} style={styles.Headercontainer}>
-                <View style={styles.RowText}>
-                    <MaterialIcons name={"arrow-back-ios"} size={24} color={"#505050"} style={styles.ArrowIcon} />
-                    <Text style={styles.HomeText}>Company Info</Text>
+                    <View style={styles.RowText}>
+                        <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+                            <MaterialIcons name={"arrow-back-ios"} size={24} color={"#505050"} style={styles.ArrowIcon} />
+                        </TouchableOpacity>
+                        <Text style={orientation === 'landscape' ? styles.CompanyTextLandscape : styles.CompantTextPortrait}>Company Info</Text>
                     </View>
                     <View style={styles.CenterUnderLineView}>
-          <View style={styles.underline}></View>
-          </View>
+                        <View style={styles.underline}></View>
+                    </View>
                 </LinearGradient>
 
 
@@ -26,12 +190,31 @@ export default function CardScreen1() {
                 </View>
                 <View style={styles.FillBoxView}>
                     <View style={styles.FillBox1}>
-                        <Text style={styles.TextXX}>XX-XXXXXXX</Text>
+                        <TextInput style={styles.TextXX}
+                             value={ein}
+                             onChangeText={value => setEin(value)}
+                             onBlur={() => setFieldTouched('ein')}
+                            placeholder='XXX-XXXX,'
+                        />
                     </View>
                 </View>
-                <View style={styles.SmallBox1}>
-                    <Text style={styles.TextSmall1}>View File</Text>
+                    {touched.ein && errors.ein && (
+                <Text style={styles.errorText}>{errors.ein} </Text>
+              )}
+
+                <View style={orientation === 'landscape' ? styles.SmallBox1ViewLandscape : styles.SmallBox1ViewPortrait}>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={selectDoc}>View File</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={uploadFiles}>Upload File</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
+
 
 
                 <View style={styles.authorityHash}>
@@ -39,12 +222,25 @@ export default function CardScreen1() {
                     <Feather name={"hash"} size={24} color={"#505050"} style={styles.HashIcon} />
                 </View>
                 <View style={styles.FillBoxView}>
-                    <View style={styles.FillBox3}>
-                        <Text style={styles.TextXX}></Text>
+                    <View style={styles.FillBox1}>
+                    <TextInput style={styles.TextXX}
+                            value={authority}
+                            onChangeText={value => setAuthority(value)}
+                            placeholder='XXX-XXXX,'
+                        />
                     </View>
                 </View>
-                <View style={styles.SmallBox3}>
-                    <Text style={styles.TextSmall1}>Upload File</Text>
+                <View style={orientation === 'landscape' ? styles.SmallBox1ViewLandscape : styles.SmallBox1ViewPortrait}>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={selectDoc}>View File</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={uploadFiles}>Upload File</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
 
@@ -54,12 +250,27 @@ export default function CardScreen1() {
                 </View>
                 <View style={styles.FillBoxView}>
                     <View style={styles.FillBox1}>
-                        <Text style={styles.TextXX}>XXXXXXXXX</Text>
+                    <TextInput style={styles.TextXX}
+                            value={bradstreet}
+                            onChangeText={value => setBradstreet(value)}
+                            placeholder='XXX-XXXX,'
+                        />
                     </View>
                 </View>
-                <View style={styles.SmallBox1}>
-                    <Text style={styles.TextSmall1}>View File</Text>
+
+                <View style={orientation === 'landscape' ? styles.SmallBox1ViewLandscape : styles.SmallBox1ViewPortrait}>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={selectDoc}>View File</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={uploadFiles}>Upload File</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
+
 
 
                 <View style={styles.MCHash}>
@@ -68,11 +279,24 @@ export default function CardScreen1() {
                 </View>
                 <View style={styles.FillBoxView}>
                     <View style={styles.FillBox1}>
-                        <Text style={styles.TextXX}>XXXXXXXXX</Text>
+                    <TextInput style={styles.TextXX}
+                            value={mcNumber}
+                            onChangeText={value => setMcNumber(value)}
+                            placeholder='XXX-XXXX,'
+                        />
                     </View>
                 </View>
-                <View style={styles.SmallBox7}>
-                    <Text style={styles.TextSmall1}>Upload File</Text>
+                <View style={orientation === 'landscape' ? styles.SmallBox1ViewLandscape : styles.SmallBox1ViewPortrait}>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={selectDoc}>View File</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
+                        <TouchableOpacity>
+                            <Text style={styles.TextSmall1} onPress={uploadFiles}>Upload File</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
 
@@ -82,16 +306,22 @@ export default function CardScreen1() {
                 </View>
                 <View style={styles.FillBoxView}>
                     <View style={styles.FillBox5}>
-                        <Text style={styles.TextXX}>XXXXXXX</Text>
+                    <TextInput style={styles.TextXX}
+                            value={dotNumber}
+                            onChangeText={value => setDotNumber(value)}
+                            placeholder='XXX-XXXX,'
+                        />
                     </View>
                 </View>
-                <View style={styles.UPSaveContainer}>
+                <View style={orientation === 'landscape' ? styles.UPSaveContainerLandscape : styles.UPSaveContainerPortrait}>
                     <View style={styles.SmallBox5}>
                         <Text style={styles.TextSmall5}>Upload File</Text>
                     </View>
+                    <TouchableOpacity onPress={handleUpdate}> 
                     <View style={styles.SmallBox6}>
                         <Text style={styles.TextSmall6}>save</Text>
                     </View>
+                        </TouchableOpacity>
                 </View>
                 <Text style={styles.resumeText}>Resume</Text>
 
@@ -113,7 +343,7 @@ export default function CardScreen1() {
                     </View>
                 </View>
 
-                <View style={styles.UPSaveContainer}>
+                <View style={orientation === 'landscape' ? styles.UPSaveContainerLandscape : styles.UPSaveContainerPortrait}>
                     <View style={styles.UploadContainer}>
                         <Text style={styles.TextSmall5}>Upload File</Text>
                     </View>
@@ -125,6 +355,8 @@ export default function CardScreen1() {
                 </View>
             </ScrollView>
         </View>
+        )}
+    </Formik>
     )
 }
 
@@ -136,32 +368,42 @@ const styles = StyleSheet.create({
         elevation: 15,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
+        position: 'relative',
     },
-    RowText:{
+    RowText: {
         flexDirection: 'row',
-      },
+    },
     ArrowIcon: {
         marginHorizontal: moderateScale(15),
         marginTop: verticalScale(52)
     },
-
-    HomeText: {
+    CompanyTextLandscape: {
+        color: '#005C89',
+        fontSize: 25,
+        fontWeight: '700',
+        position: 'absolute', // Absolute positioning
+        left: '50%', // Centers the text horizontally based on the container
+        transform: [{ translateX: -80 }], // Adjusts the centering
+        top: 52, // Align the text vertically as needed
+        // Other styling for the text
+    },
+    CompantTextPortrait: {
         color: '#005C89',
         fontSize: 25,
         fontWeight: '700',
         marginHorizontal: moderateScale(60),
         marginTop: verticalScale(50),
     },
-    CenterUnderLineView:{
+    CenterUnderLineView: {
         flex: 1,
         alignItems: 'center'
-      },
-      underline: {
-          width: '30%',
-          height: 4,
-          backgroundColor: '#005C89',
-          marginTop: 5,
-      },
+    },
+    underline: {
+        width: '30%',
+        height: 4,
+        backgroundColor: '#005C89',
+        marginTop: 5,
+    },
     EinHash: {
         flexDirection: 'row',
         marginHorizontal: moderateScale(40),
@@ -188,28 +430,47 @@ const styles = StyleSheet.create({
     TextXX: {
         fontSize: 20,
         fontWeight: '500',
-        color: '#111111',
+        color: 'black',
         marginHorizontal: 20,
-        marginTop: 20
+        marginTop: 10
     },
-    SmallBox1: {
+    SmallBox1Landscape: {
         backgroundColor: '#F1F1F1',
-        width: 120,
+        width: moderateScale(110),
         height: 60,
         elevation: 5,
         borderRadius: 25,
-        marginHorizontal: 240,
+        marginHorizontal: moderateScale(420),
         marginTop: 10,
         borderWidth: 1,
-        borderColor: '#00A170'
+        borderColor: '#00A170',
+        marginTop: verticalScale(10)
+    },
+    SmallBox1ViewPortrait: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginRight: 40
+    },
+    SmallBox1Portrait: {
+        backgroundColor: '#F1F1F1',
+        width: moderateScale(110),
+        height: 60,
+        elevation: 5,
+        borderRadius: 25,
+        marginEnd: 10,
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: '#00A170',
+        justifyContent: 'center',
+        alignItems: 'center',
 
     },
     TextSmall1: {
         fontSize: 17,
         fontWeight: '500',
         color: '#111111',
-        marginHorizontal: 23,
-        marginTop: 16,
+
     },
     authorityHash: {
         flexDirection: 'row',
@@ -229,16 +490,30 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         marginTop: 7
     },
-    SmallBox3: {
+    SmallBox3Landscape: {
+        backgroundColor: '#F1F1F1',
+        width: moderateScale(130),
+        height: 60,
+        elevation: 5,
+        borderRadius: 25,
+        marginHorizontal: moderateScale(400),
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: '#333333',
+        marginTop: verticalScale(10)
+    },
+    SmallBox3Portrait: {
         backgroundColor: '#F1F1F1',
         width: 140,
         height: 60,
         elevation: 5,
         borderRadius: 25,
-        marginHorizontal: 220,
+        marginHorizontal: moderateScale(205),
         marginTop: 10,
         borderWidth: 1,
-        borderColor: '#333333'
+        borderColor: '#333333',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 
 
@@ -339,9 +614,17 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#00A170'
     },
-    UPSaveContainer: {
+    UPSaveContainerLandscape: {
         flexDirection: 'row',
-        marginHorizontal: 125
+        justifyContent: 'flex-end',
+        marginRight: verticalScale(200),
+        marginTop: verticalScale(10)
+    },
+    UPSaveContainerPortrait: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginRight: verticalScale(25)
+
     },
     SmallBox5: {
         backgroundColor: '#F1F1F1',
@@ -414,8 +697,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 40,
         marginTop: 60,
     },
-    Otherview:{
-        flex:1,
+    Otherview: {
+        flex: 1,
         alignItems: 'center',
     },
     OtherCard1: {
@@ -453,7 +736,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#333333'
     },
-    UploadContainer:{
+    UploadContainer: {
         backgroundColor: '#F1F1F1',
         width: 120,
         height: 60,
@@ -467,7 +750,7 @@ const styles = StyleSheet.create({
         shadowOffset: '#111111',
         marginBottom: verticalScale(60)
     },
-    SaveContainer:{
+    SaveContainer: {
         backgroundColor: '#007959',
         width: moderateScale(110),
         height: verticalScale(50),

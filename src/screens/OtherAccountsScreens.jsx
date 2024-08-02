@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TextInput, Image } from 'react-native'
+import { StyleSheet, Text, View, ScrollView, TextInput, Image, TouchableOpacity } from 'react-native'
 import React from 'react'
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -7,14 +7,22 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import useOrientation from '../Hooks/useOrientation';
+import { useNavigation } from '@react-navigation/native';
+
+
 
 export default function OtherAccountsScreens() {
+    const orientation = useOrientation();
+    const navigation = useNavigation();
     return (
         <View>
             <ScrollView style={styles.container}>
                 <LinearGradient colors={['#A8C8D7', '#80DEC3']} style={styles.Headercontainer}>
                     <View style={styles.RowText}>
+                    <TouchableOpacity onPress={() => navigation.navigate("Home")}>
                         <MaterialIcons name={"arrow-back-ios"} size={24} color={"#505050"} style={styles.ArrowIcon} />
+                        </TouchableOpacity>
                         <Text style={styles.HomeText}>Other Accounts Info</Text>
                     </View>
                     <View style={styles.CenterUnderLineView}>
@@ -46,7 +54,7 @@ export default function OtherAccountsScreens() {
                     </View>
                 </View>
 
-                <View style={styles.SaveView}>
+                <View style={orientation === 'landscape' ? styles.SaveViewContainerLandscape : styles.SaveViewContainerPortrait}>
                     <View style={styles.SaveBox}>
                         <Text style={styles.SaveText}>Save</Text>
                     </View>
@@ -63,16 +71,17 @@ export default function OtherAccountsScreens() {
 
 const styles = StyleSheet.create({
     Headercontainer: {
-        width: 415,
+        width: '100%',
         height: 120,
         backgroundColor: '#FFFFFF',
         elevation: 15,
         borderBottomRightRadius: 20,
         borderBottomLeftRadius: 20,
+        position: 'relative',
     },
     RowText: {
         flexDirection: 'row',
-      },
+    },
 
     ArrowIcon: {
         marginHorizontal: moderateScale(15),
@@ -83,19 +92,22 @@ const styles = StyleSheet.create({
         color: '#005C89',
         fontSize: 25,
         fontWeight: '700',
-        marginHorizontal: moderateScale(35),
-        marginTop: verticalScale(50),
+        position: 'absolute', // Absolute positioning
+        left: '50%', // Centers the text horizontally based on the container
+        transform: [{ translateX: -114 }], // Adjusts the centering
+        top: 52, // Align the text vertically as needed
+        // Other styling for the text
     },
     CenterUnderLineView: {
         flex: 1,
         alignItems: 'center'
-      },
-      underline: {
+    },
+    underline: {
         width: '30%',
         height: 4,
         backgroundColor: '#005C89',
         marginTop: 5,
-      },
+    },
 
     TextSave: {
         fontSize: scale(23),
@@ -179,7 +191,12 @@ const styles = StyleSheet.create({
         marginLeft: 20,
         marginRight: 10,
     },
-    SaveView: {
+    SaveViewContainerLandscape:{
+        alignItems: 'flex-end',
+        marginRight: moderateScale(230),
+        marginTop: verticalScale(10)
+    },
+    SaveViewContainerPortrait: {
         alignItems: 'flex-end',
         marginRight: moderateScale(30)
     },
@@ -202,7 +219,8 @@ const styles = StyleSheet.create({
     Imagecontainer: {
         flexDirection: 'row',
         marginTop: 40,
-        marginHorizontal: 40
+        marginHorizontal: 40,
+        marginBottom: verticalScale(40)
     },
     AddIcon: {
         marginHorizontal: 10,

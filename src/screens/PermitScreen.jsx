@@ -1,21 +1,29 @@
-import { StyleSheet, Text, View, ScrollView, Image, TextInput } from 'react-native'
+import { StyleSheet, Text, View, ScrollView, Image, TextInput, TouchableOpacity } from 'react-native'
 import React from 'react'
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import useOrientation from '../Hooks/useOrientation';
+import { useNavigation } from '@react-navigation/native';
+
+
 
 export default function PermitScreen() {
+    const orientation = useOrientation();
+    const navigation = useNavigation();
     return (
         <ScrollView style={styles.container}>
             <LinearGradient colors={['#A8C8D7', '#80DEC3']} style={styles.Headercontainer}>
                 <View style={styles.RowText}>
+                <TouchableOpacity onPress={() => navigation.navigate("Home")}>
                     <MaterialIcons name={"arrow-back-ios"} size={24} color={"#505050"} style={styles.ArrowIcon} />
-                    <Text style={styles.HomeText}>Permit Log Book</Text>
+                    </TouchableOpacity>
+                    <Text style={orientation === 'landscape' ? styles.PermitTextLandscape : styles.PermitTextPortrait}>Permit Log Book</Text>
                 </View>
                 <View style={styles.CenterUnderLineView}>
-            <View style={styles.underline}></View>
-          </View>
+                    <View style={styles.underline}></View>
+                </View>
 
             </LinearGradient>
 
@@ -131,7 +139,7 @@ export default function PermitScreen() {
                     <Text style={styles.OtherTextBox}>Add Description</Text>
                 </View>
             </View>
-            <View style={styles.UPSaveContainer}>
+            <View style={orientation === 'landscape' ? styles.UPSaveContainerLandscape : styles.UPSaveContainerPortrait}>
                 <View style={styles.SmallBox5}>
                     <Text style={styles.TextSmall5}>Upload File</Text>
                 </View>
@@ -152,33 +160,46 @@ const styles = StyleSheet.create({
         elevation: 15,
         borderBottomRightRadius: 20,
         borderBottomLeftRadius: 20,
+        position: 'relative',
     },
     RowText: {
         flexDirection: 'row',
-      },
+    },
 
     ArrowIcon: {
         marginHorizontal: moderateScale(15),
         marginTop: verticalScale(52)
     },
-
-    HomeText: {
+    PermitTextLandscape: {
         color: '#005C89',
         fontSize: 25,
         fontWeight: '700',
-        marginHorizontal: moderateScale(55),
-        marginTop: verticalScale(50),
+        position: 'absolute', // Absolute positioning
+        left: '50%', // Centers the text horizontally based on the container
+        transform: [{ translateX: -95 }], // Adjusts the centering
+        top: 52, // Align the text vertically as needed
+        // Other styling for the text
+    },
+    PermitTextPortrait: {
+        color: '#005C89',
+        fontSize: 25,
+        fontWeight: '700',
+        position: 'absolute', // Absolute positioning
+        left: '50%', // Centers the text horizontally based on the container
+        transform: [{ translateX: -95}], // Adjusts the centering
+        top: 52, // Align the text vertically as needed
+        // Other styling for the text
     },
     CenterUnderLineView: {
         flex: 1,
         alignItems: 'center'
-      },
-      underline: {
+    },
+    underline: {
         width: '30%',
         height: 4,
         backgroundColor: '#005C89',
         marginTop: 5,
-      },
+    },
     FirstText: {
         fontSize: scale(18),
         fontWeight: 'bold',
@@ -191,7 +212,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     FisrtContainer: {
-        width: 350,
+        width: moderateScale(320),
         height: 60,
         backgroundColor: '#00A170',
         borderRadius: 20,
@@ -206,7 +227,7 @@ const styles = StyleSheet.create({
 
     },
     UploadFileConatiner: {
-        width: 350,
+        width: moderateScale(320),
         height: 60,
         backgroundColor: '#00A170',
         borderRadius: 20,
@@ -280,7 +301,13 @@ const styles = StyleSheet.create({
         color: '#606060'
     },
 
-    UPSaveContainer: {
+    UPSaveContainerLandscape:{
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginRight: verticalScale(200),
+        marginTop: verticalScale(10)
+    },
+    UPSaveContainerPortrait: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         marginRight: verticalScale(25)

@@ -1,10 +1,16 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native'
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Button, Alert } from 'react-native'
 import React from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import useOrientation from '../Begins/src/Hooks/useOrientation';
+import firebase from 'firebase/app';
+import auth from '@react-native-firebase/auth';
 
 
 export default function HomeScreen() {
+  
+  const orientation = useOrientation();
+
   const navigation = useNavigation();
 
   const HandleCompanyInfo = () => {
@@ -13,74 +19,90 @@ export default function HomeScreen() {
   }
   return (
     <ScrollView>
-    <View>
-      <View style={styles.Headercontainer}>
-        <View style={styles.RowText}>
-          <Image source={require("../Begins/src/screens/Assets/Settings.png")} style={styles.imageLine} />
-          <Text style={styles.HomeText}>Home</Text>
+      <View>
+        <View style={styles.Headercontainer}>
+          <View style={styles.RowText}>
+            <Image source={require("../Begins/src/screens/Assets/Settings.png")} style={styles.imageLine} />
+            <Text style={orientation === 'landscape' ? styles.HomeTextLandscape : styles.HomeTextPortrait}>Home</Text>
+          </View>
+          <View style={styles.CenterUnderLineView}>
+            <View style={styles.underline}></View>
+          </View>
         </View>
-        <View style={styles.CenterUnderLineView}>
-          <View style={styles.underline}></View>
-          </View>
+        <View style={styles.cardContainer}>
+          <TouchableOpacity onPress={HandleCompanyInfo}>
+            <View style={orientation === 'landscape' ? styles.Card1Landscape : styles.Card1Portrait}>
+              <Image source={require("../Begins/src/screens/Assets/infoicon.png")} style={styles.imageLine2} />
+              <View style={styles.TextcardView}>
+                <Text style={styles.Textcard}>Company Info</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate("Accounts")}>
+            <View style={orientation === 'landscape' ? styles.Card2Landscape : styles.Card2Portrait}>
+              <Image source={require("../Begins/src/screens/Assets/user.png")} style={styles.imageLine2} />
+              <View style={styles.TextcardView}>
+                <Text style={styles.Textcard2}>Account Info & Settings</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+
+        <View style={styles.cardContainer2}>
+          <TouchableOpacity onPress={() => navigation.navigate("Permit")}>
+            <View style={orientation === 'landscape' ? styles.Card1Landscape : styles.Card1Portrait}>
+              <Image source={require("../Begins/src/screens/Assets/ebook.png")} style={styles.imageLine2} />
+              <View style={styles.TextcardView}>
+                <Text style={styles.Textcard3}>Permit Log Book</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate("IFTA")}>
+            <View style={orientation === 'landscape' ? styles.Card2Landscape : styles.Card2Portrait}>
+              <Image source={require("../Begins/src/screens/Assets/tracking.png")} style={styles.imageLine2} />
+              <View style={styles.TextcardView}>
+                <Text style={styles.Textcard}>IFTA Tracking</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.cardContainer3}>
+          <TouchableOpacity onPress={() => navigation.navigate("Expense")}>
+            <View style={orientation === 'landscape' ? styles.Card1Landscape : styles.Card1Portrait}>
+              <Image source={require("../Begins/src/screens/Assets/expense.png")} style={styles.imageLine2} />
+              <View style={styles.TextcardView}>
+                <Text style={styles.Textcard5}>Expenses Report </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate("ElectronicLog")}>
+            <View style={orientation === 'landscape' ? styles.Card2Landscape : styles.Card2Portrait}>
+              <Image source={require("../Begins/src/screens/Assets/ebook.png")} style={styles.imageLine2} />
+              <View style={styles.TextcardView}>
+                <Text style={styles.Textcard6}>Electronic Log Book</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.cardContainer4}>
+          <TouchableOpacity onPress={() => navigation.navigate("OtherInfo")}>
+            <View style={orientation === 'landscape' ? styles.Card3Landscape : styles.Card3Portrait}>
+              <Image source={require("../Begins/src/screens/Assets/lock.png")} style={styles.imageLine2} />
+              <View style={styles.TextcardView}>
+                <Text style={styles.Textcard7}>Other Accounts Info</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+       
+
       </View>
-      <View style={styles.cardContainer}>
-        <TouchableOpacity onPress={HandleCompanyInfo}>
-          <View style={styles.Card1}>
-            <Image source={require("../Begins/src/screens/Assets/infoicon.png")} style={styles.imageLine2} />
-            <Text style={styles.Textcard}>Company Info</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate("Accounts")}>
-          <View style={styles.Card2}>
-            <Image source={require("../Begins/src/screens/Assets/user.png")} style={styles.imageLine2} />
-            <Text style={styles.Textcard2}>Account Info & Settings</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-
-      <View style={styles.cardContainer2}>
-        <TouchableOpacity onPress={() => navigation.navigate("Permit")}>
-          <View style={styles.Card1}>
-            <Image source={require("../Begins/src/screens/Assets/ebook.png")} style={styles.imageLine2} />
-            <Text style={styles.Textcard3}>Permit Log Book</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate("IFTA")}>
-          <View style={styles.Card2}>
-            <Image source={require("../Begins/src/screens/Assets/tracking.png")} style={styles.imageLine2} />
-            <Text style={styles.Textcard}>IFTA Tracking</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.cardContainer3}>
-        <TouchableOpacity onPress={() => navigation.navigate("Expense")}>
-          <View style={styles.Card1}>
-            <Image source={require("../Begins/src/screens/Assets/expense.png")} style={styles.imageLine2} />
-            <Text style={styles.Textcard5}>Expenses Report </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate("ElectronicLog")}>
-          <View style={styles.Card2}>
-            <Image source={require("../Begins/src/screens/Assets/ebook.png")} style={styles.imageLine2} />
-            <Text style={styles.Textcard6}>Electronic Log Book</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.cardContainer4}>
-        <TouchableOpacity onPress={() => navigation.navigate("OtherInfo")}>
-          <View style={styles.Card1}>
-            <Image source={require("../Begins/src/screens/Assets/lock.png")} style={styles.imageLine2} />
-            <Text style={styles.Textcard7}>Other Accounts Info</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </View>
     </ScrollView>
   )
 }
@@ -93,26 +115,38 @@ const styles = StyleSheet.create({
     elevation: 15,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    position: 'relative'
   },
-  RowText:{
+  RowText: {
     flexDirection: 'row',
   },
-  HomeText: {
+  HomeTextLandscape: {
+    color: '#00A170',
+    fontSize: 25,
+    fontWeight: '700',
+    position: 'absolute', // Absolute positioning
+    left: '50%', // Centers the text horizontally based on the container
+    transform: [{ translateX: -35 }], // Adjusts the centering
+    top: 52, // Align the text vertically as needed
+    // Other styling for the text
+
+  },
+  HomeTextPortrait: {
     color: '#00A170',
     fontSize: 25,
     fontWeight: '700',
     marginHorizontal: moderateScale(94),
     marginTop: 60,
   },
-  CenterUnderLineView:{
+  CenterUnderLineView: {
     flex: 1,
     alignItems: 'center'
   },
   underline: {
-      width: '25%',
-      height: 4,
-      backgroundColor: '#00A170',
-      marginTop: 5,
+    width: '25%',
+    height: 4,
+    backgroundColor: '#00A170',
+    marginTop: 5,
   },
   imageLine: {
     marginHorizontal: moderateScale(20),
@@ -124,7 +158,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
 
   },
-  Card1: {
+  Card1Landscape: {
+    width: '100%',
+    height: 111,
+    borderWidth: 0.6,
+    borderRadius: 20,
+    borderColor: '#00A170',
+    backgroundColor: '#FFFFFF',
+    elevation: 7,
+    marginTop: 25,
+  },
+  Card1Portrait: {
     width: 180,
     height: 111,
     borderWidth: 0.6,
@@ -136,49 +180,54 @@ const styles = StyleSheet.create({
 
   },
   Textcard: {
-    fontSize: scale(13),
-    marginHorizontal: 40,
-    marginTop: 5,
+    fontSize: scale(12),
     fontWeight: '700',
     color: '#181818',
   },
   Textcard2: {
     fontSize: scale(12),
-    marginHorizontal: 10,
-    marginTop: 5,
     fontWeight: '700',
     color: '#181818',
   },
   Textcard3: {
-    fontSize: scale(13),
-    marginHorizontal: 30,
-    marginTop: 5,
+    fontSize: scale(12),
     fontWeight: '700',
     color: '#181818',
   },
   Textcard5: {
-    fontSize: scale(13),
-    marginHorizontal: 30,
-    marginTop: 5,
+    fontSize: scale(12),
     fontWeight: '700',
     color: '#181818',
   },
   Textcard6: {
-    fontSize: scale(13),
-    marginHorizontal: 20,
-    marginTop: 5,
+    fontSize: scale(12),
+    fontWeight: '700',
+    color: '#181818',
+  },
+  TextcardView: {
+    fontSize: scale(12),
+    alignItems: 'center',
+    justifyContent: 'center',
     fontWeight: '700',
     color: '#181818',
   },
   Textcard7: {
-    fontSize: scale(13),
-    marginHorizontal: 18,
-    marginTop: 5,
+    fontSize: scale(12),
     fontWeight: '700',
     color: '#181818',
   },
 
-  Card2: {
+  Card2Landscape: {
+    width: '100%',
+    height: 111,
+    borderWidth: 0.6,
+    borderRadius: 20,
+    borderColor: '#00A170',
+    backgroundColor: '#FFFFFF',
+    elevation: 7,
+    marginTop: 25,
+  },
+  Card2Portrait: {
     width: 180,
     height: 111,
     borderWidth: 0.6,
@@ -203,10 +252,33 @@ const styles = StyleSheet.create({
   cardContainer4: {
     flexDirection: 'row',
     marginTop: 25,
-    marginHorizontal: moderateScale(10)
+    marginHorizontal: moderateScale(10),
+    marginBottom: verticalScale(40)
   },
   imageLine2: {
     marginHorizontal: 60,
-    marginTop: 15
-  }
+    marginTop: 15,
+    marginBottom: 5
+  },
+  Card3Landscape: {
+    width: 185,
+    height: 111,
+    borderWidth: 0.6,
+    borderRadius: 20,
+    borderColor: '#00A170',
+    backgroundColor: '#FFFFFF',
+    elevation: 7,
+    marginTop: 25,
+    marginHorizontal: moderateScale(135)
+  },
+  Card3Portrait: {
+    width: 180,
+    height: 111,
+    borderWidth: 0.6,
+    borderRadius: 20,
+    borderColor: '#00A170',
+    backgroundColor: '#FFFFFF',
+    elevation: 7,
+    marginTop: 25,
+  },
 })
