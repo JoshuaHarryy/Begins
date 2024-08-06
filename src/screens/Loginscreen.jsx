@@ -1,7 +1,8 @@
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Dimensions,Alert } from 'react-native'
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Dimensions, Alert } from 'react-native'
 import React from 'react'
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fontisto from 'react-native-vector-icons/Fontisto';
+import Feather from 'react-native-vector-icons/Feather';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { moderateScale, moderateVerticalScale, verticalScale, scale } from 'react-native-size-matters';
@@ -12,11 +13,20 @@ import { useState } from 'react';
 
 
 const Loginscreen = ({ navigation }) => {
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+
   const handleSignIn = () => {
+
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    
     auth()
       .signInWithEmailAndPassword(email, password)
       .then(userCredentials => {
@@ -28,67 +38,85 @@ const Loginscreen = ({ navigation }) => {
         Alert.alert("Email & password are incorrect")
         console.log(error)
         setError(error.message);
+        
       });
+      
   };
-
+  
+  const togglePasswordVisibility = () => {
+    setSecureTextEntry(!secureTextEntry);
+  };
 
   const orientation = useOrientation();
   return (
 
     <ScrollView contentContainerStyle={styles.container}>
-      
-        <View>
-          <View style={orientation === 'landscape' ? styles.imageContainerLandscape : styles.imageContainerPortrait}>
-            <Image source={require("../screens/Assets/HeaderRoad.png")}style={orientation === 'landscape' ? styles.imageTopLandscape : styles.imageTopPortrait} />
-          </View>
-          <View style={orientation === 'landscape' ? styles.HelloLandscape : styles.helloPortrait}>
-            <Text style={styles.helloText}>Welcome back!</Text>
-          </View>
-          <View style={styles.inputView}>
-            <View style={styles.inputContainer}>
-              <AntDesign name={"mail"} size={24} color={"#757575"} style={styles.inputIcon} />
-              <TextInput style={styles.Textinput}
+
+      <View>
+        <View style={orientation === 'landscape' ? styles.imageContainerLandscape : styles.imageContainerPortrait}>
+          <Image source={require("../screens/Assets/HeaderRoad.png")} style={orientation === 'landscape' ? styles.imageTopLandscape : styles.imageTopPortrait} />
+        </View>
+        <View style={orientation === 'landscape' ? styles.HelloLandscape : styles.helloPortrait}>
+          <Text style={styles.helloText}>Welcome back!</Text>
+        </View>
+        <View style={styles.inputView}>
+          <View style={styles.inputContainer}>
+            <AntDesign name={"mail"} size={24} color={"#757575"} style={styles.inputIcon} />
+            <TextInput style={styles.Textinput}
               value={email}
-              onChangeText={value=> setEmail(value)} 
-              placeholder='Email Address' 
+              onChangeText={value => setEmail(value)}
+              placeholder='Email Address'
               placeholderTextColor={'#757575'} />
-            </View>
-            <View style={styles.inputContainer2}>
-              <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
-              <TextInput style={styles.Textinput} 
+          </View>
+          <View style={styles.inputContainer2}>
+            <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
+            <TextInput style={styles.Textinput}
               value={password}
-              onChangeText={value=> setPassword(value)}
-              placeholder='Password' 
-              secureTextEntry 
+              onChangeText={value => setPassword(value)}
+              placeholder='Password'
+              secureTextEntry={secureTextEntry}
               placeholderTextColor={'#757575'} />
-            </View>
-          </View>
-          <TouchableOpacity>
-            <Text style={orientation === 'landscape' ? styles.ForgetPassLandscape : styles.ForgetPassPortrait}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleSignIn}>
-            <View style={styles.LoginView}>
-              <View style={styles.logincontainer}>
-                <Text style={styles.loginText}>Log In</Text>
-              </View>
-            </View>
+            {/* <Feather name={"eye-off"} size={24} color={"#757575"} style={styles.inputIcon2} /> */}
+            <TouchableOpacity onPress={togglePasswordVisibility}>
+              <Feather
+                name={secureTextEntry ? 'eye-off' : 'eye'}
+                size={24}
+                color="gray"
+                style={styles.inputIcon2}
+              />
             </TouchableOpacity>
-          <View style={styles.connectView}>
-            <Text style={styles.connect}>Or connect via</Text>
           </View>
+        </View>
+        <TouchableOpacity>
+          <Text style={orientation === 'landscape' ? styles.ForgetPassLandscape : styles.ForgetPassPortrait}>Forgot Password?</Text>
+        </TouchableOpacity>
 
-          <SafeAreaView style={styles.twoboxes}>
-            <View style={styles.googlebox}>
+        <TouchableOpacity onPress={handleSignIn}>
+          <View style={styles.LoginView}>
+            <View style={styles.logincontainer}>
+              <Text style={styles.loginText}>Log In</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+        <View style={styles.connectView}>
+          <Text style={styles.connect}>Or connect via</Text>
+        </View>
+
+        <SafeAreaView style={styles.twoboxes}>
+          <TouchableOpacity style={styles.googlebox}>
+            <View >
               <AntDesign name={"google"} size={24} color={"#757575"} style={styles.GoogleIcon} />
             </View>
-            <View style={styles.Facebookbox}>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.Facebookbox}>
+            <View >
               <AntDesign name={"facebook-square"} size={24} color={"#757575"} style={styles.facebookIcon} />
             </View>
-          </SafeAreaView>
-        </View>
-       
-      
+          </TouchableOpacity>
+        </SafeAreaView>
+      </View>
+
+
 
       <View style={orientation === 'landscape' ? styles.FooterContainerLandscape : styles.FooterContainerPortrait}>
         <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
@@ -98,8 +126,8 @@ const Loginscreen = ({ navigation }) => {
           </Text>
         </TouchableOpacity>
       </View>
-      
-      </ScrollView>
+
+    </ScrollView>
 
   )
 }
@@ -112,8 +140,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexGrow: 1,
   },
-  imageContainerLandscape:{
-     height: verticalScale(50),
+  imageContainerLandscape: {
+    height: verticalScale(50),
     marginTop: verticalScale(1),
     flexDirection: 'row',
   },
@@ -122,7 +150,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(10),
     flexDirection: 'row',
   },
-  imageTopLandscape:{
+  imageTopLandscape: {
     width: '100%',
     height: verticalScale(200),
   },
@@ -133,7 +161,7 @@ const styles = StyleSheet.create({
   imageLine: {
     width: 46.53,
   },
-  HelloLandscape:{
+  HelloLandscape: {
     alignItems: 'center',
     marginTop: 170,
     marginBottom: verticalScale(20),
@@ -169,6 +197,11 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     marginRight: 10,
   },
+  inputIcon2: {
+    color: "green",
+    marginRight: 20,
+  },
+
   Textinput: {
     flex: 1,
     fontSize: 16,
@@ -185,7 +218,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#757575',
   },
-  ForgetPassLandscape:{
+  ForgetPassLandscape: {
     color: '#00A170',
     fontSize: 16,
     marginHorizontal: moderateScale(80),
@@ -208,7 +241,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#007959',
     borderRadius: 20,
     marginTop: verticalScale(20),
-    elevation: 2,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -257,7 +289,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  FooterContainerLandscape:{
+  FooterContainerLandscape: {
     width: "100%",
     height: 59,
     backgroundColor: '#E8F3F2',

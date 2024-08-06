@@ -444,7 +444,15 @@ const styles = StyleSheet.create({
         marginTop: 10,
         borderWidth: 1,
         borderColor: '#00A170',
-        marginTop: verticalScale(10)
+        marginTop: verticalScale(10),
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    SmallBox1ViewLandscape:{
+        
+    
+        
+        
     },
     SmallBox1ViewPortrait: {
         flex: 1,

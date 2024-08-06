@@ -165,7 +165,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderColor: '#00A170',
     backgroundColor: '#FFFFFF',
-    elevation: 7,
     marginTop: 25,
   },
   Card1Portrait: {
@@ -175,7 +174,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderColor: '#00A170',
     backgroundColor: '#FFFFFF',
-    elevation: 7,
+    
     marginTop: 25,
 
   },
@@ -224,7 +223,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderColor: '#00A170',
     backgroundColor: '#FFFFFF',
-    elevation: 7,
     marginTop: 25,
   },
   Card2Portrait: {
@@ -234,7 +232,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderColor: '#00A170',
     backgroundColor: '#FFFFFF',
-    elevation: 7,
     marginTop: 25,
     marginHorizontal: 4,
 
@@ -267,7 +264,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderColor: '#00A170',
     backgroundColor: '#FFFFFF',
-    elevation: 7,
     marginTop: 25,
     marginHorizontal: moderateScale(135)
   },
@@ -278,7 +274,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderColor: '#00A170',
     backgroundColor: '#FFFFFF',
-    elevation: 7,
     marginTop: 25,
   },
 })

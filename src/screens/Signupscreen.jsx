@@ -14,19 +14,18 @@ import * as Yup from 'yup';
 
 const SignupSchema = Yup.object().shape({
   name: Yup.string()
-    .min(4, 'Too Short!')
+    .min(3, 'Too Short!')
     .max(15, 'Too Long!')
     .required('Please enter your name'),
   email: Yup.string()
     .email('Invalid email')
     .required('Please enter your email address'),
   password: Yup.string()
-    .min(6)
-    .required('Please enter your password')
-    .required(
-      'Must contain minimum 6 characters'
-    )
-
+    .min(6, 'Must contain minimum 6 characters')
+    .required('Please enter your password'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password'), null], 'Passwords must match')
+    .required('Please confirm your password')
 });
 
 const Signupscreen = () => {
@@ -35,6 +34,8 @@ const Signupscreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState()
+
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
 
   const handleLogin = async () => {
     try {
@@ -74,7 +75,7 @@ const Signupscreen = () => {
         navigation.navigate('Login');
         console.log(isUserCreated);
       } else {
-        Alert.alert('please Enter All data')
+        Alert.alert('please Enter all data')
       }
     } catch (error) {
       console.log(error);
@@ -85,17 +86,23 @@ const Signupscreen = () => {
     navigation.navigate("Login");
 
   }
+  const togglePasswordVisibility = () => {
+    setSecureTextEntry(!secureTextEntry);
+  };
+
   return (
-    <Formik initialValues={{
+    <Formik
+    initialValues={{
       name: '',
       email: '',
       password: '',
       confirmPassword: '',
     }}
-      validationSchema={SignupSchema}
-    >
+    validationSchema={SignupSchema}
+    onSubmit={handleLogin}
+  >
+    {({ values, errors, touched, handleChange, handleSubmit, setFieldTouched }) => (
 
-      {({ values, errors, touched, handleChange, handleSubmit, setFieldTouched }) => (
 
 
 
@@ -114,7 +121,8 @@ const Signupscreen = () => {
             <View style={styles.BoxesmainView}>
               <View style={styles.NameBox}>
                 <FontAwesome name={"user-circle-o"} size={24} color={"#757575"} style={styles.IconUser} />
-                <TextInput style={styles.TextName}
+                <TextInput
+                  style={styles.TextName}
                   value={values.name}
                   onChangeText={value => {
                     setName(value);
@@ -122,10 +130,11 @@ const Signupscreen = () => {
                   }}
                   onBlur={() => setFieldTouched('name')}
                   placeholder='Name'
-                  placeholderTextColor={'#757575'} />
+                  placeholderTextColor={'#757575'}
+                />
               </View>
               {touched.name && errors.name && (
-                <Text style={styles.errorText}>{errors.name} </Text>
+                <Text style={styles.errorText}>{errors.name}</Text>
               )}
             </View>
 
@@ -160,7 +169,16 @@ const Signupscreen = () => {
                   }}
                   onBlur={() => setFieldTouched('password')}
                   placeholder='Password'
-                  secureTextEntry placeholderTextColor={'#757575'} />
+                  secureTextEntry={secureTextEntry} 
+                  placeholderTextColor={'#757575'} />
+                   <TouchableOpacity onPress={togglePasswordVisibility}>
+              <Feather
+                name={secureTextEntry ? 'eye-off' : 'eye'}
+                size={24}
+                color="gray"
+                style={styles.inputIcon2}
+              />
+            </TouchableOpacity>
               </View>
               {touched.password && errors.password && (
                 <Text style={styles.errorText}>{errors.password} </Text>
@@ -185,12 +203,16 @@ const Signupscreen = () => {
             </View>
 
             <View style={styles.twoboxes}>
-              <View style={styles.googlebox}>
+              <TouchableOpacity style={styles.googlebox}>
+              <View >
                 <AntDesign name={"google"} size={24} color={"#757575"} style={styles.GoogleIcon} />
               </View>
-              <View style={styles.Facebookbox}>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.Facebookbox}>
+              <View >
                 <AntDesign name={"facebook-square"} size={24} color={"#757575"} style={styles.facebookIcon} />
               </View>
+              </TouchableOpacity>
             </View>
 
           </View>
@@ -285,6 +307,12 @@ const styles = StyleSheet.create({
     marginLeft: 25,
     marginRight: 10,
     marginTop: 18
+  },
+  inputIcon2:{
+    color: "green",
+    marginRight: 20,
+    marginTop: 15,
+    marginHorizontal: 145
   },
   TextName: {
     fontSize: 18
