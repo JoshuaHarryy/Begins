@@ -13,6 +13,7 @@ import { useState } from 'react';
 
 
 const Loginscreen = ({ navigation }) => {
+
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +23,7 @@ const Loginscreen = ({ navigation }) => {
 
   const handleSignIn = () => {
 
+   
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
@@ -32,7 +34,7 @@ const Loginscreen = ({ navigation }) => {
       .then(userCredentials => {
         Alert.alert("Login In successful!")
         console.log(userCredentials.user.email);
-        navigation.navigate('Home');
+        navigation.navigate('house');
       })
       .catch(error => {
         Alert.alert("Email & password are incorrect")

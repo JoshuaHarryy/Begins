@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Button, Al
 import React from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import useOrientation from '../Begins/src/Hooks/useOrientation';
+import useOrientation from './src/Hooks/useOrientation';
 import firebase from 'firebase/app';
 import auth from '@react-native-firebase/auth';
 
@@ -124,11 +124,11 @@ const styles = StyleSheet.create({
     color: '#00A170',
     fontSize: 25,
     fontWeight: '700',
-    position: 'absolute', // Absolute positioning
-    left: '50%', // Centers the text horizontally based on the container
-    transform: [{ translateX: -35 }], // Adjusts the centering
-    top: 52, // Align the text vertically as needed
-    // Other styling for the text
+    position: 'absolute',
+    left: '50%', 
+    transform: [{ translateX: -35 }], 
+    top: 52, 
+    
 
   },
   HomeTextPortrait: {

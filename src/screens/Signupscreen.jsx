@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, TextInput, View, SafeAreaView, TouchableOpacity, ScrollView, Alert } from 'react-native'
 import React, { useState } from 'react'
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Fontisto from 'react-native-vector-icons/Fontisto';
 import Feather from 'react-native-vector-icons/Feather';
 import Entypo from 'react-native-vector-icons/Entypo';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -33,21 +34,18 @@ const Signupscreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState()
+  const [name, setName] = useState();
+  const [confirmPassword, setConfirmPassword] = useState();
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
 
   const handleLogin = async () => {
     try {
       if (email.length > 0 && password.length > 0 && name.length > 0) {
-        const isUserCreated = await auth().createUserWithEmailAndPassword(
-
-          email,
-          password
-        )
+        const isUserCreated = await auth().createUserWithEmailAndPassword(email, password)
           .then(async (userCredentials) => {
-            userData = {
-              name: name,
+            const userData = {
+              name,
               email: userCredentials.user.email,
               uid: userCredentials.user.uid,
               address: '',
@@ -57,35 +55,36 @@ const Signupscreen = () => {
               supportNumber: '',
               createdAt: firestore.FieldValue.serverTimestamp(),
               updatedAt: firestore.FieldValue.serverTimestamp(),
-            }
-            await firestore().collection("Users").doc(userCredentials.user.uid)
-              .set(userData);
+            };
+            await firestore().collection("Users").doc(userCredentials.user.uid).set(userData);
             console.log(userCredentials);
-            Alert.alert("Signup successful!")
+            Alert.alert("Signup successful!");
+            await auth().currentUser.sendEmailVerification();
+            await auth().signOut();
+            Alert.alert('Please verify your email. Check the link in your inbox.');
+            navigation.navigate('Login');
           })
           .catch((error) => {
-            console.log(error)
-          })
-
-
-
-        await auth().currentUser.sendEmailVerification();
-        await auth().signOut();
-        Alert('please Verify your Email Check Out Link In Your Inbox');
-        navigation.navigate('Login');
-        console.log(isUserCreated);
+            if (error.code === 'auth/email-already-in-use') {
+              Alert.alert('Email already in use', 'The email address is already registered. Please use a different email or log in.');
+            } else if (error.code === 'auth/invalid-email') {
+              Alert.alert('Invalid Email', 'The email address is not valid. Please enter a valid email.');
+            } else if (error.code === 'auth/weak-password') {
+              Alert.alert('Weak Password', 'The password is too weak. Please enter a stronger password.');
+            } else {
+              Alert.alert('Error', error.message);
+            }
+            console.log(error);
+          });
       } else {
-        Alert.alert('please Enter all data')
+        Alert.alert('Please Enter All Data', 'All fields are required. Please fill in all the details.');
       }
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
       Alert.alert('Error', error.message);
     }
-  }
-  const HandleLogin = () => {
-    navigation.navigate("Login");
+  };
 
-  }
   const togglePasswordVisibility = () => {
     setSecureTextEntry(!secureTextEntry);
   };
@@ -159,37 +158,43 @@ const Signupscreen = () => {
             </View>
 
             <View style={styles.BoxesmainView}>
-              <View style={styles.PasswordBox}>
-                <Entypo name={"lock"} size={24} color={"#757575"} style={styles.IconUser} />
-                <TextInput style={styles.TextName}
-                  value={values.password}
-                  onChangeText={value => {
-                    setPassword(value);
-                    handleChange('password')(value);
-                  }}
-                  onBlur={() => setFieldTouched('password')}
-                  placeholder='Password'
-                  secureTextEntry={secureTextEntry} 
-                  placeholderTextColor={'#757575'} />
-                   <TouchableOpacity onPress={togglePasswordVisibility}>
+            <View style={styles.PasswordBox}>
+            <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
+            <TextInput style={styles.TextName}
+              value={password}
+              onChangeText={value => setPassword(value)}
+              placeholder='Password'
+              secureTextEntry={secureTextEntry}
+              placeholderTextColor={'#757575'} />
+            <TouchableOpacity onPress={togglePasswordVisibility}>
               <Feather
                 name={secureTextEntry ? 'eye-off' : 'eye'}
                 size={24}
-                color="gray"
                 style={styles.inputIcon2}
               />
             </TouchableOpacity>
-              </View>
+          </View>
               {touched.password && errors.password && (
                 <Text style={styles.errorText}>{errors.password} </Text>
               )}
             </View>
 
             <View style={styles.BoxesmainView}>
-              <View style={styles.ConfirmPasswordBox}>
-                <Entypo name={"lock"} size={24} color={"#757575"} style={styles.IconUser} />
-                <TextInput style={styles.TextName} placeholder='ConfirmPassword' secureTextEntry placeholderTextColor={'#757575'} />
-              </View>
+            <View style={styles.ConfirmPasswordBox}>
+            <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
+            <TextInput style={styles.TextName}
+              value={confirmPassword}
+              onChangeText={value => setConfirmPassword(value)}
+              placeholder='Confirm Password'
+              secureTextEntry={secureTextEntry}
+              placeholderTextColor={'#757575'} />
+              <TouchableOpacity  onPress={togglePasswordVisibility}>
+             <Feather 
+             name={secureTextEntry ? 'eye-off' : 'eye'} 
+             size={24} 
+             style={styles.inputIcon2} />
+             </TouchableOpacity>
+          </View>
             </View>
             <View style={styles.SignupView}>
               <TouchableOpacity style={styles.Signupbutton}
@@ -223,7 +228,7 @@ const Signupscreen = () => {
             <View style={orientation === 'landscape' ? styles.FooterContainerLandscape : styles.FooterContainerPortrait}>
               <Text style={styles.baseText}>
                 <Text style={styles.FirstFooterText}>Already have an account?</Text>
-                <TouchableOpacity onPress={HandleLogin}>
+                <TouchableOpacity onPress={handleLogin}>
                   <Text style={styles.secondFooterText}> Log in</Text>
 
                 </TouchableOpacity>
@@ -312,10 +317,10 @@ const styles = StyleSheet.create({
     color: "green",
     marginRight: 20,
     marginTop: 15,
-    marginHorizontal: 145
   },
   TextName: {
-    fontSize: 18
+    fontSize: 18,
+    flex: 1,
   },
   EmailAddressBox: {
     width: '85%',
@@ -336,10 +341,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     borderColor: '#757575',
     borderRadius: 20,
-
     marginTop: 5,
     flexDirection: "row",
     elevation: 4,
+  },
+  inputIcon: {
+    marginLeft: 25,
+    marginRight: 14,
+    marginTop: 18
+  },
+  Textinput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#757575',
   },
   ConfirmPasswordBox: {
     width: '85%',
