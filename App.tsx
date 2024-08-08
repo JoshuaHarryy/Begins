@@ -29,7 +29,7 @@ const AuthStack = () => (
 
 const AppStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="house" component={HomeScreen} />
+    <Stack.Screen name="Home" component={HomeScreen} />
     <Stack.Screen name="Company" component={CardScreen1} />
     <Stack.Screen name="Accounts" component={AccountScreen} />
     <Stack.Screen name="OtherInfo" component={OtherAccountsScreens} />
@@ -42,7 +42,6 @@ const AppStack = () => (
 
 const MainApp = () => {
   const { isLoggedIn } = useLogin();
-  console.log('Is logged in:', isLoggedIn);
 
   return (
     <NavigationContainer>

@@ -34,7 +34,7 @@ const Loginscreen = ({ navigation }) => {
       .then(userCredentials => {
         Alert.alert("Login In successful!")
         console.log(userCredentials.user.email);
-        navigation.navigate('house');
+        navigation.navigate('Home');
       })
       .catch(error => {
         Alert.alert("Email & password are incorrect")
