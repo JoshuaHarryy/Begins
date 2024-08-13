@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, TextInput, View, SafeAreaView, TouchableOpacity, ScrollView, Alert } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Feather from 'react-native-vector-icons/Feather';
@@ -12,6 +12,8 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+
 
 const SignupSchema = Yup.object().shape({
   name: Yup.string()
@@ -30,12 +32,20 @@ const SignupSchema = Yup.object().shape({
 });
 
 const Signupscreen = () => {
+  
+  GoogleSignin.configure({
+    webClientId: '1:1081204046823:android:e82a0af163482058201b42', // From Firebase Console
+    offlineAccess: true, // if you need offline access
+  });
+
   const orientation = useOrientation();
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState();
   const [confirmPassword, setConfirmPassword] = useState();
+  const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
 
@@ -88,6 +98,50 @@ const Signupscreen = () => {
   const togglePasswordVisibility = () => {
     setSecureTextEntry(!secureTextEntry);
   };
+
+  const signIn = async () => {
+    try {
+      // Ensure Google Play Services are available
+      await GoogleSignin.hasPlayServices();
+      // Sign in the user with Google
+      const { idToken } = await GoogleSignin.signIn();
+  
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+  
+      // Sign in to Firebase with the Google credential
+      const userCredential = await auth().signInWithCredential(googleCredential);
+  
+      // You can add additional user data to Firestore if needed
+      const userData = {
+        name: userCredential.user.displayName,
+        email: userCredential.user.email,
+        uid: userCredential.user.uid,
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      };
+  
+      await firestore().collection("Users").doc(userCredential.user.uid).set(userData);
+  
+      console.log("Google Sign-In successful:", userCredential);
+      Alert.alert("Login successful!");
+      navigation.navigate('Home'); // Assuming you want to navigate to the Home screen after login
+  
+    } catch (error) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        Alert.alert("Google Sign-In cancelled.");
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        Alert.alert("Google Sign-In is in progress.");
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert("Google Play Services not available.");
+      } else {
+        Alert.alert("Error", error.message);
+        console.error(error);
+      }
+    }
+  };
+  
+  
 
   return (
     <Formik
@@ -208,7 +262,9 @@ const Signupscreen = () => {
             </View>
 
             <View style={styles.twoboxes}>
-              <TouchableOpacity style={styles.googlebox}>
+              <TouchableOpacity
+              onPress={signIn} 
+              style={styles.googlebox}>
               <View >
                 <AntDesign name={"google"} size={24} color={"#757575"} style={styles.GoogleIcon} />
               </View>

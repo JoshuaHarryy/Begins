@@ -11,7 +11,7 @@ export const useLogin = () => {
 const LoginProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Load the login state from AsyncStorage when the app starts
+  
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
