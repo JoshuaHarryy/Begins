@@ -9,10 +9,12 @@ import { useNavigation } from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import firebase from 'firebase/compat/app';
 import auth from '@react-native-firebase/auth';
+import { useLogin } from './src/context/LoginProvider';
 
 
 
 export default function AccountScreen() {
+  const { logout } = useLogin();
   const orientation = useOrientation();
   const navigation = useNavigation();
   const [name, setName] = useState('');
@@ -49,6 +51,7 @@ export default function AccountScreen() {
   }, []);
 
   const handleUpdate = async () => {
+   
     try {
       if (name.length > 0 && email.length > 0) {
         const userId = auth().currentUser.uid;
@@ -73,11 +76,16 @@ export default function AccountScreen() {
       Alert.alert('Error', error.message);
     }
   };
+
+  
   const OnLogout = () => {
+    
+
     auth().signOut()
       .then(response => {
         Alert.alert("User Signed Out!")
-        navigation.navigate("Login")
+        logout()
+        // navigation.navigate("AuthStack")
       }).catch(error => {
         console.log(error.message)
         Alert.alert("Not able to logout!")

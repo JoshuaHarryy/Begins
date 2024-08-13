@@ -11,9 +11,11 @@ import useOrientation from '../Hooks/useOrientation';
 import auth from '@react-native-firebase/auth';
 import { useState } from 'react';
 import { useLogin } from '../context/LoginProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const Loginscreen = ({ navigation }) => {
-const {login}=useLogin()
+const {login} = useLogin()
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +38,7 @@ const {login}=useLogin()
         console.log(userCredentials.user.email);
         login()
         // navigation.replace('AppStack');
+       
       })
       .catch(error => {
         Alert.alert("Email & password are incorrect")

@@ -30,7 +30,7 @@ export default function HomeScreen() {
           </View>
         </View>
         <View style={styles.cardContainer}>
-          <TouchableOpacity onPress={HandleCompanyInfo}>
+          <TouchableOpacity onPress={() => navigation.navigate("Company")}>
             <View style={orientation === 'landscape' ? styles.Card1Landscape : styles.Card1Portrait}>
               <Image source={require("../Begins/src/screens/Assets/infoicon.png")} style={styles.imageLine2} />
               <View style={styles.TextcardView}>

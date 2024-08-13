@@ -15,6 +15,7 @@ import IFTAScreen from './src/screens/IFTAScreen';
 import ExpenseScreen from './src/screens/ExpenseScreen';
 import ElectronicLogScreen from './src/screens/ElectronicLogScreen';
 import LoginProvider, { useLogin } from './src/context/LoginProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Stack = createNativeStackNavigator();
 
@@ -42,7 +43,10 @@ const AppStack = () => (
 );
 
 const MainApp = () => {
+
+
   const { isLoggedIn } = useLogin();
+  console.log('Is user logged in:', isLoggedIn); // Add this line to debug
 
   return (
     <NavigationContainer>
