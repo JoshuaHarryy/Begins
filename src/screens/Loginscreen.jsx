@@ -10,10 +10,10 @@ import { useDimensions, useDeviceOrientation } from '@react-native-community/hoo
 import useOrientation from '../Hooks/useOrientation';
 import auth from '@react-native-firebase/auth';
 import { useState } from 'react';
-
+import { useLogin } from '../context/LoginProvider';
 
 const Loginscreen = ({ navigation }) => {
-
+const {login}=useLogin()
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +34,8 @@ const Loginscreen = ({ navigation }) => {
       .then(userCredentials => {
         Alert.alert("Login In successful!")
         console.log(userCredentials.user.email);
-        navigation.navigate('Home');
+        login()
+        // navigation.replace('AppStack');
       })
       .catch(error => {
         Alert.alert("Email & password are incorrect")
