@@ -40,6 +40,7 @@ const {login} = useLogin()
         Alert.alert("Login In successful!")
         console.log(userCredentials.user.email);
         login()
+        // navigation.replace('AppStack');
        
       })
       .catch(error => {
