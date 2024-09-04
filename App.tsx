@@ -16,11 +16,17 @@ import ExpenseScreen from './src/screens/ExpenseScreen';
 import ElectronicLogScreen from './src/screens/ElectronicLogScreen';
 import LoginProvider, { useLogin } from './src/context/LoginProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Settings } from 'react-native-fbsdk-next';
+import SplashScreen from './src/screens/SplashScreen';
+
+Settings.setAppID('7935311009913194');
+Settings.initializeSDK();
 
 const Stack = createNativeStackNavigator();
 
 const AuthStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator initialRouteName={'SplashScreen'} screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="splace" component={SplashScreen} />
     <Stack.Screen name="Login" component={Loginscreen} />
     <Stack.Screen name="Signup" component={Signupscreen} />
     <Stack.Screen name="OTP" component={Otpscreen} />
@@ -45,7 +51,7 @@ const MainApp = () => {
 
 
   const { isLoggedIn } = useLogin();
-  console.log('Is user logged in:', isLoggedIn); // Add this line to debug
+  console.log('Is user logged in:', isLoggedIn); 
 
   return (
     <NavigationContainer>

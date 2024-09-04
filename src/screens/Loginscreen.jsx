@@ -1,4 +1,4 @@
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Dimensions, Alert } from 'react-native'
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Dimensions, Alert, ActivityIndicator } from 'react-native'
 import React from 'react'
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fontisto from 'react-native-vector-icons/Fontisto';
@@ -12,6 +12,7 @@ import auth from '@react-native-firebase/auth';
 import { useState } from 'react';
 import { useLogin } from '../context/LoginProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoginButton, AccessToken } from 'react-native-fbsdk-next';
 
 
 const Loginscreen = ({ navigation }) => {
@@ -20,6 +21,7 @@ const {login} = useLogin()
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState('')
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
 
@@ -30,6 +32,7 @@ const {login} = useLogin()
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
+    setLoading(true);
     
     auth()
       .signInWithEmailAndPassword(email, password)
@@ -40,6 +43,7 @@ const {login} = useLogin()
        
       })
       .catch(error => {
+        setLoading(false);
         Alert.alert("Email & password are incorrect")
         console.log(error)
         setError(error.message);
@@ -96,6 +100,9 @@ const {login} = useLogin()
           <Text style={orientation === 'landscape' ? styles.ForgetPassLandscape : styles.ForgetPassPortrait}>Forgot Password?</Text>
         </TouchableOpacity>
 
+{loading? (
+  <ActivityIndicator size="large" color="#00A170" style={styles.loading} />
+): (
         <TouchableOpacity onPress={handleSignIn}>
           <View style={styles.LoginView}>
             <View style={styles.logincontainer}>
@@ -103,6 +110,8 @@ const {login} = useLogin()
             </View>
           </View>
         </TouchableOpacity>
+        )}
+
         <View style={styles.connectView}>
           <Text style={styles.connect}>Or connect via</Text>
         </View>
@@ -320,5 +329,9 @@ const styles = StyleSheet.create({
   secondFooterText: {
     color: '#00A170',
 
+  },
+  loading:{
+    marginVertical: 20,
+    flex : 1,
   },
 })

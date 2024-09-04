@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TextInput, View, SafeAreaView, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import { Image, StyleSheet, Text, TextInput, View, SafeAreaView, TouchableOpacity, ScrollView, Alert, BackHandler } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Fontisto from 'react-native-vector-icons/Fontisto';
@@ -13,9 +13,14 @@ import firestore from '@react-native-firebase/firestore';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { AccessToken, LoginManager } from 'react-native-fbsdk-next';
+import { useLogin } from '../context/LoginProvider';
+import { ActivityIndicator } from 'react-native';
+
 
 
 const SignupSchema = Yup.object().shape({
+  
   name: Yup.string()
     .min(3, 'Too Short!')
     .max(15, 'Too Long!')
@@ -34,8 +39,8 @@ const SignupSchema = Yup.object().shape({
 const Signupscreen = () => {
   
   GoogleSignin.configure({
-    webClientId: '1:1081204046823:android:e82a0af163482058201b42', // From Firebase Console
-    offlineAccess: true, // if you need offline access
+    webClientId: '1081204046823-2kk1sbc0bomnhn7r0a9ead74oglsc31r.apps.googleusercontent.com',
+    offlineAccess: true, 
   });
 
   const orientation = useOrientation();
@@ -45,11 +50,12 @@ const Signupscreen = () => {
   const [name, setName] = useState();
   const [confirmPassword, setConfirmPassword] = useState();
   const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [isloading, setLoading] = useState(false);
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       if (email.length > 0 && password.length > 0 && name.length > 0) {
         const isUserCreated = await auth().createUserWithEmailAndPassword(email, password)
@@ -92,42 +98,73 @@ const Signupscreen = () => {
     } catch (error) {
       console.log(error.message);
       Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false); 
     }
   };
 
   const togglePasswordVisibility = () => {
     setSecureTextEntry(!secureTextEntry);
   };
-
+  const {login} = useLogin()
   const signIn = async () => {
+    
     try {
-      // Ensure Google Play Services are available
+      
       await GoogleSignin.hasPlayServices();
-      // Sign in the user with Google
+  
+     
+      await GoogleSignin.signOut(); // Add this line
+  
+      
       const { idToken } = await GoogleSignin.signIn();
   
-      // Create a Google credential with the token
+      
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
   
-      // Sign in to Firebase with the Google credential
+      
       const userCredential = await auth().signInWithCredential(googleCredential);
   
-      // You can add additional user data to Firestore if needed
-      const userData = {
-        name: userCredential.user.displayName,
-        email: userCredential.user.email,
-        uid: userCredential.user.uid,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
-      };
+     
+      console.log("Google Sign-In successful:", userCredential.user);
   
-      await firestore().collection("Users").doc(userCredential.user.uid).set(userData);
+      
+      const userDoc = await firestore().collection("Users").doc(userCredential.user.uid).get();
   
-      console.log("Google Sign-In successful:", userCredential);
+      if (!userDoc.exists) {
+        
+        const userData = {
+          name: userCredential.user.displayName || '',
+          email: userCredential.user.email,
+          uid: userCredential.user.uid,
+          address: '',
+          phone: '',
+          mcNumber: '',
+          dotNumber: '',
+          supportNumber: '',
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        };
+  
+        console.log("Saving user data to Firestore:", userData);
+  
+        await firestore().collection("Users").doc(userCredential.user.uid).set(userData)
+          .then(() => {
+            console.log("User data saved successfully!");
+          })
+          .catch((error) => {
+            console.error("Error saving user data:", error);
+            Alert.alert("Error", "Failed to save user data to Firestore. Please try again.");
+          });
+      } else {
+        console.log("User already exists in Firestore.");
+      }
+      login();
       Alert.alert("Login successful!");
-      navigation.navigate('Home'); // Assuming you want to navigate to the Home screen after login
-  
+
+     
     } catch (error) {
+      console.error("Error during Google Sign-In:", error); // Print full error
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         Alert.alert("Google Sign-In cancelled.");
       } else if (error.code === statusCodes.IN_PROGRESS) {
@@ -136,12 +173,97 @@ const Signupscreen = () => {
         Alert.alert("Google Play Services not available.");
       } else {
         Alert.alert("Error", error.message);
-        console.error(error);
       }
+    }
+  };
+
+  const signInWithFacebook = async () => {
+    try {
+      // Attempt login with Facebook
+      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
+
+      if (result.isCancelled) {
+        throw 'User cancelled the login process';
+      }
+
+      // Get the access token
+      const data = await AccessToken.getCurrentAccessToken();
+
+      if (!data) {
+        throw 'Something went wrong obtaining access token';
+      }
+
+      // Create a Facebook credential with the token
+      const facebookCredential = auth.FacebookAuthProvider.credential(data.accessToken);
+
+      // Sign in with the credential
+      const userCredential = await auth().signInWithCredential(facebookCredential);
+
+      console.log("Facebook Sign-In successful:", userCredential.user);
+
+      // Check if the user already exists in Firestore
+      const userDoc = await firestore().collection("Users").doc(userCredential.user.uid).get();
+
+      if (!userDoc.exists) {
+        const userData = {
+          name: userCredential.user.displayName || '',
+          email: userCredential.user.email,
+          uid: userCredential.user.uid,
+          address: '',
+          phone: '',
+          mcNumber: '',
+          dotNumber: '',
+          supportNumber: '',
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        };
+
+        console.log("Saving user data to Firestore:", userData);
+
+        await firestore().collection("Users").doc(userCredential.user.uid).set(userData)
+          .then(() => {
+            console.log("User data saved successfully!");
+          })
+          .catch((error) => {
+            console.error("Error saving user data:", error);
+            Alert.alert("Error", "Failed to save user data to Firestore. Please try again.");
+          });
+      } else {
+        console.log("User already exists in Firestore.");
+      }
+      login();
+      Alert.alert("Login successful!");
+    } catch (error) {
+      console.log("Error during Facebook Sign-In:", error);
+      Alert.alert("Error", error.message || "Failed to sign in with Facebook. Please try again.");
     }
   };
   
   
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert("Hold on!", "Are you sure you want to exit?", [
+        {
+          text: "No",
+          onPress: () => null,
+          style: "cancel"
+        },
+        {
+          text: "Yes",
+          onPress: () => BackHandler.exitApp()
+        }
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
 
   return (
     <Formik
@@ -249,13 +371,19 @@ const Signupscreen = () => {
              style={styles.inputIcon2} />
              </TouchableOpacity>
           </View>
+
             </View>
+            {isloading ?  (
+          <ActivityIndicator size="large" color="#00A170" style={styles.loading}/>
+      ): (
             <View style={styles.SignupView}>
               <TouchableOpacity style={styles.Signupbutton}
                 onPress={handleLogin}>
                 <Text style={styles.signupText}>Sign up</Text>
               </TouchableOpacity>
             </View>
+            
+          )}
 
             <View style={styles.connectText}>
               <Text style={styles.Connectvia}>Or connect via</Text>
@@ -269,7 +397,7 @@ const Signupscreen = () => {
                 <AntDesign name={"google"} size={24} color={"#757575"} style={styles.GoogleIcon} />
               </View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.Facebookbox}>
+              <TouchableOpacity onPress={signInWithFacebook} style={styles.Facebookbox}>
               <View >
                 <AntDesign name={"facebook-square"} size={24} color={"#757575"} style={styles.facebookIcon} />
               </View>
@@ -284,7 +412,7 @@ const Signupscreen = () => {
             <View style={orientation === 'landscape' ? styles.FooterContainerLandscape : styles.FooterContainerPortrait}>
               <Text style={styles.baseText}>
                 <Text style={styles.FirstFooterText}>Already have an account?</Text>
-                <TouchableOpacity onPress={handleLogin}>
+                <TouchableOpacity onPress={() => navigation.navigate("Login")}>
                   <Text style={styles.secondFooterText}> Log in</Text>
 
                 </TouchableOpacity>
@@ -292,8 +420,11 @@ const Signupscreen = () => {
             </View>
           </View>
         </ScrollView>
+      
+       
       )}
     </Formik>
+    
   )
 }
 
@@ -423,6 +554,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     elevation: 4,
   },
+
+  loaderContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+
   SignupView: {
     alignItems: 'center',
   },
@@ -511,4 +654,7 @@ const styles = StyleSheet.create({
     color: '#00A170',
 
   },
+loading:{
+  marginTop: 20 
+},
 })

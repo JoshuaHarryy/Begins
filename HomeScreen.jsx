@@ -1,22 +1,65 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Button, Alert } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import useOrientation from './src/Hooks/useOrientation';
 import firebase from 'firebase/app';
 import auth from '@react-native-firebase/auth';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+useState
 
 
 export default function HomeScreen() {
-  
-  const orientation = useOrientation();
 
+  const [loading, setLoading] = useState(true)
+  const orientation = useOrientation();
   const navigation = useNavigation();
 
-  const HandleCompanyInfo = () => {
-    navigation.navigate("company")
+ useEffect(() => {
+  const loadData = () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
+  };
 
+  loadData().then(() => {
+    setLoading(false);
+  });
+}, []);
+
+  if (loading) {
+    return (
+      <SkeletonPlaceholder>
+        <View style={styles.skeletonHeader} />
+         {/* Card 1 and 2 */}
+      <View style={styles.cardContainer}>
+        <View style={styles.skeletonCard} />
+        <View style={styles.skeletonCard} />
+      </View>
+
+      {/* Card 3 and 4 */}
+      <View style={styles.cardContainer2}>
+        <View style={styles.skeletonCard} />
+        <View style={styles.skeletonCard} />
+      </View>
+
+      {/* Card 5 and 6 */}
+      <View style={styles.cardContainer3}>
+        <View style={styles.skeletonCard} />
+        <View style={styles.skeletonCard} />
+      </View>
+
+      {/* Last single card, aligned to the left */}
+      <View style={styles.cardContainer4}>
+        <View style={styles.skeletonCardSingle} />
+      </View>
+      
+      </SkeletonPlaceholder>
+    );
   }
+
   return (
     <ScrollView>
       <View>
@@ -275,5 +318,27 @@ const styles = StyleSheet.create({
     borderColor: '#00A170',
     backgroundColor: '#FFFFFF',
     marginTop: 25,
+  },
+  skeletonHeader: {
+    width: '100%',
+    height: 120,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  skeletonCard: {
+    width: 180,
+    height: 111,
+    borderRadius: 20,
+    marginTop: 25,
+    marginHorizontal: moderateScale(10),
+    backgroundColor: '#E1E9EE',
+  },
+  skeletonCardSingle: {
+    width: '47%',
+    height: 105,
+    borderRadius: 25,
+    marginTop: 25,
+    marginLeft: moderateScale(2), // Align the last card to the left
+    backgroundColor: '#E1E9EE',
   },
 })

@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Button, TextInput,Alert} from 'react-native'
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Button, TextInput,Alert, 
+    ActivityIndicator, Modal} from 'react-native'
 import React, { useState } from 'react'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -40,7 +41,8 @@ export default function CardScreen1() {
     const [mcNumber, setMcNumber] = useState('');
     const [dotNumber, setDotNumber] = useState('');
     const [email, setEmail] = useState(auth().currentUser.email); 
-
+    const [Loading, setLoading] = useState(false)
+    
     useEffect(() => {
         const fetchUserData = async () => {
             const userId = auth().currentUser.uid;
@@ -116,6 +118,7 @@ export default function CardScreen1() {
     };
 
     const uploadFiles = async () => {
+        setLoading(true);
         try {
             if (FileData.length > 0) {
                 const uploadTasks = FileData.map(async (file) => {
@@ -136,6 +139,8 @@ export default function CardScreen1() {
             }
         } catch (error) {
             console.log(error);
+        }finally {
+            setLoading(false);
         }
     };
 
@@ -214,6 +219,16 @@ export default function CardScreen1() {
                         </TouchableOpacity>
                     </View>
                 </View>
+                {Loading && (
+        <Modal transparent={true} animationType="slide">
+          <View style={styles.modalBackground}>
+            <View style={styles.activityIndicatorWrapper}>
+              <ActivityIndicator size="large" color="#00A170" />
+              <Text style={{ marginTop: 10 }}>Uploading...</Text>
+            </View>
+          </View>
+        </Modal>
+      )}
 
 
 
@@ -242,6 +257,7 @@ export default function CardScreen1() {
                         </TouchableOpacity>
                     </View>
                 </View>
+               
 
 
                 <View style={styles.BradstreetHash}>
@@ -270,8 +286,7 @@ export default function CardScreen1() {
                         </TouchableOpacity>
                     </View>
                 </View>
-
-
+                
 
                 <View style={styles.MCHash}>
                     <Text style={styles.EinText}>MC</Text>
@@ -769,5 +784,23 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginHorizontal: 10,
         marginBottom: verticalScale(60)
+    },
+    loadingContainer: { 
+        marginTop: 20
+    },
+    modalBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    activityIndicatorWrapper:{
+        backgroundColor: '#FFFFFF',
+    height: 100,
+    width: 100,
+    borderRadius: 10,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     },
 })

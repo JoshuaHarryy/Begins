@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, TextInput, Button, Alert } from 'react-native'
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -24,6 +24,7 @@ export default function AccountScreen() {
   const [dotNumber, setDotNumber] = useState('');
   const [supportNumber, setSupportNumber] = useState('');
   const [email, setEmail] = useState(auth().currentUser.email);  // Fetch the current user's email from auth
+  const [Loading, setLoading] = useState();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -51,7 +52,7 @@ export default function AccountScreen() {
   }, []);
 
   const handleUpdate = async () => {
-   
+   setLoading(true)
     try {
       if (name.length > 0 && email.length > 0) {
         const userId = auth().currentUser.uid;
@@ -74,6 +75,8 @@ export default function AccountScreen() {
     } catch (error) {
       console.log(error);
       Alert.alert('Error', error.message);
+    }finally{
+      setLoading(false)
     }
   };
 
@@ -195,6 +198,11 @@ export default function AccountScreen() {
               placeholderTextColor={'#757575'} />
           </View>
         </View>
+
+        {Loading ?  (
+          <ActivityIndicator size="large" color="#00A170" style={styles.loading}/>
+          
+      ): (
         <View style={styles.ResumeView}>
           <TouchableOpacity onPress={handleUpdate}>
             <View style={styles.verifyConatiner}>
@@ -202,6 +210,8 @@ export default function AccountScreen() {
             </View>
           </TouchableOpacity>
         </View>
+      )
+    }
         <View style={styles.ResumeView1}>
           <TouchableOpacity onPress={ OnLogout}>
             <View style={styles.verifyConatiner1}>
@@ -427,5 +437,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     marginBottom: 50,
+  },
+  loading:{
+    marginBottom: 20 ,
   },
 })
