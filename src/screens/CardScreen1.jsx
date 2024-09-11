@@ -16,56 +16,56 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 
 
-const SignupSchema = Yup.object().shape({
-    ein: Yup.string()
-      .min(3, 'Too Short!')
-      .max(15, 'Too Long!')
-      .required('please enter atleast 6 digits'),
-    authority: Yup.string()
-      .email('Invalid email')
-      .required('Please enter your email address'),
-    password: Yup.string()
-      .min(6)
-      .required('Please enter your password')
-      .required(
-        'Must contain minimum 6 characters'
-      )
+// const SignupSchema = Yup.object().shape({
+//     ein: Yup.string()
+//       .min(3, 'Too Short!')
+//       .max(15, 'Too Long!')
+//       .required('please enter atleast 6 digits'),
+//     authority: Yup.string()
+//       .email('Invalid email')
+//       .required('Please enter your email address'),
+//     password: Yup.string()
+//       .min(6)
+//       .required('Please enter your password')
+//       .required(
+//         'Must contain minimum 6 characters'
+//       )
   
-  });
+//   });
 
 export default function CardScreen1() {
-    const [name, setName] = useState('');
+    // const [name, setName] = useState('');
     const [ein, setEin] = useState('');
     const [authority, setAuthority] = useState('');
     const [bradstreet, setBradstreet] = useState('');
     const [mcNumber, setMcNumber] = useState('');
     const [dotNumber, setDotNumber] = useState('');
-    const [email, setEmail] = useState(auth().currentUser.email); 
+    // const [email, setEmail] = useState(auth().currentUser.email); 
     const [Loading, setLoading] = useState(false)
     
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const userId = auth().currentUser.uid;
+    // useEffect(() => {
+    //     const fetchUserData = async () => {
+    //         const userId = auth().currentUser.uid;
 
-            try {
-                const userDoc = await firestore().collection('Users').doc(userId).get();
+    //         try {
+    //             const userDoc = await firestore().collection('Users').doc(userId).get();
 
-                if (userDoc.exists) {
-                    const data = userDoc.data();
-                    setEin(data.ein);
-                    setAuthority(data.authority);
-                    setBradstreet(data.bradstreet);
-                    setMcNumber(data.mcNumber);
-                    setDotNumber(data.dotNumber);
-                    setEmail(data.email)
-                }
-            } catch (error) {
-                Alert.alert('Error', error.message);
-            }
-        };
+    //             if (userDoc.exists) {
+    //                 const data = userDoc.data();
+    //                 setEin(data.ein);
+    //                 setAuthority(data.authority);
+    //                 setBradstreet(data.bradstreet);
+    //                 setMcNumber(data.mcNumber);
+    //                 setDotNumber(data.dotNumber);
+    //                 setEmail(data.email)
+    //             }
+    //         } catch (error) {
+    //             Alert.alert('Error', error.message);
+    //         }
+    //     };
 
-        fetchUserData();
-    }, []);
+    //     fetchUserData();
+    // }, []);
 
     const handleUpdate = async () => {
         try {
@@ -97,7 +97,7 @@ export default function CardScreen1() {
         }
     };
 
-    const [FileData, setFileData] = useState([]);
+    // const [FileData, setFileData] = useState([]);
 
     const selectDoc = async () => {
         try {
@@ -144,36 +144,36 @@ export default function CardScreen1() {
         }
     };
 
-    const saveFileLocationsToFirestore = async (uploadedFiles) => {
-        try {
-            const user = auth().currentUser;
-            const userDoc = firestore().collection('Users').doc(user.uid);
+    // const saveFileLocationsToFirestore = async (uploadedFiles) => {
+    //     try {
+    //         const user = auth().currentUser;
+    //         const userDoc = firestore().collection('Users').doc(user.uid);
 
-            await userDoc.set({
-                files: uploadedFiles,
-                updatedAt: firestore.FieldValue.serverTimestamp(),
-            }, { merge: true });
+    //         await userDoc.set({
+    //             files: uploadedFiles,
+    //             updatedAt: firestore.FieldValue.serverTimestamp(),
+    //         }, { merge: true });
 
-            console.log('File locations saved to Firestore successfully');
-            Alert.alert('Uploaded successfully')
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    //         console.log('File locations saved to Firestore successfully');
+    //         Alert.alert('Uploaded successfully')
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // };
     const orientation = useOrientation();
     const navigation = useNavigation();
     return (
-        <Formik initialValues={{
-            ein: '',
-            authority: '',
-            bradsheet: '',
-            mcNumber: '',
-            dotNumber: '',
-          }}
-            validationSchema={SignupSchema}
-          >
+        // <Formik initialValues={{
+        //     // ein: '',
+        //     // authority: '',
+        //     // bradsheet: '',
+        //     // mcNumber: '',
+        //     // dotNumber: '',
+        //   }}
+        //     validationSchema={SignupSchema}
+        //   >
       
-            {({ values, errors, touched, handleChange, handleSubmit, setFieldTouched }) => (
+        //     {({ values, errors, touched, handleChange, handleSubmit, setFieldTouched }) => (
         <View>
             <ScrollView style={styles.container}>
                 <LinearGradient colors={['#A8C8D7', '#80DEC3']} style={styles.Headercontainer}>
@@ -196,16 +196,14 @@ export default function CardScreen1() {
                 <View style={styles.FillBoxView}>
                     <View style={styles.FillBox1}>
                         <TextInput style={styles.TextXX}
-                             value={ein}
-                             onChangeText={value => setEin(value)}
-                             onBlur={() => setFieldTouched('ein')}
+                            //  value={ein}
+                            //  onChangeText={value => setEin(value)}
+                            //  onBlur={() => setFieldTouched('ein')}
                             placeholder='XXX-XXXX,'
                         />
                     </View>
                 </View>
-                    {touched.ein && errors.ein && (
-                <Text style={styles.errorText}>{errors.ein} </Text>
-              )}
+                   
 
                 <View style={orientation === 'landscape' ? styles.SmallBox1ViewLandscape : styles.SmallBox1ViewPortrait}>
                     <View style={orientation === 'landscape' ? styles.SmallBox1Landscape : styles.SmallBox1Portrait}>
@@ -371,9 +369,9 @@ export default function CardScreen1() {
             </ScrollView>
         </View>
         )}
-    </Formik>
-    )
-}
+//     // </Formik>
+//     )
+// }
 
 const styles = StyleSheet.create({
     Headercontainer: {

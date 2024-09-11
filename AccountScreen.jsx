@@ -10,6 +10,8 @@ import firestore from '@react-native-firebase/firestore';
 import firebase from 'firebase/compat/app';
 import auth from '@react-native-firebase/auth';
 import { useLogin } from './src/context/LoginProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 
 
@@ -23,78 +25,120 @@ export default function AccountScreen() {
   const [mcNumber, setMcNumber] = useState('');
   const [dotNumber, setDotNumber] = useState('');
   const [supportNumber, setSupportNumber] = useState('');
-  const [email, setEmail] = useState(auth().currentUser.email);  // Fetch the current user's email from auth
+  const [email, setEmail] = useState();  // Fetch the current user's email from auth
   const [Loading, setLoading] = useState();
+  const [profileData, setProfileData] = useState({
+    name : '',
+    email :'',
+  })
 
+  
   useEffect(() => {
     const fetchUserData = async () => {
-      const userId = auth().currentUser.uid;
-
+      setLoading(true);
       try {
-        const userDoc = await firestore().collection('Users').doc(userId).get();
-
-        if (userDoc.exists) {
-          const data = userDoc.data();
-          setName(data.name);
-          setAddress(data.address);
-          setPhone(data.phone);
-          setMcNumber(data.mcNumber);
-          setDotNumber(data.dotNumber);
-          setSupportNumber(data.supportNumber);
-          setEmail(data.email)
+        const token = await AsyncStorage.getItem('authtoken');
+        if (!token) {
+          throw new Error('No token found');
+        }
+  
+        const response = await fetch('https://staging.ardent-training.com/api/student-profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            "api-key": "eyJpdiI6ImpDdHdQL0NHYzVNQmwwYmE0NFMxbnc9PSIsInZhbHVlIjoiRmZPN2poWjg4OHJkR2xjOGg5SDgwSmg5M0lXMUhXeFhzbUJZZ05hT21MMmd1TUlpUlhEMWo1ekJXU1dTMThnT0szYTlMSlQva3BoODc3cDJhS2sxZE5KMDhyR1U0VlhoSUp1Z3pVSEwydk9KZHpYbWg5SjNjUjdoVFZFem51UFlRK28yemRVZ2NxWVYvVEJTSHZNWEJROXM4NnFubFVaU09UNDZYWSs4REpvYVdjdldaWVFYYlpPZFlpOWc0Z2cvSHA0YXlQMWVJMWlSeEFWakU2TzVyTXljM0xsMmVtMm5lLzMwWlZEbUlCZER3REZMWko0dTNPZGFSak5LRkdFNCIsIm1hYyI6IjIxYzNkNTM3MjVhOGVkN2Q5YjFjMDU2ZjYwM2QzM2MxMzVkYWIzODEwYmEyZDg1ODJiZjViMzUzZmU5NDBmYmIiLCJ0YWciOiIifQ=="
+          },
+        });
+  
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Profile data:', result); 
+          setName(result.first_name);  
+          setPhone(result.phone_number);
+          setEmail(result.email);
+         
+        } else {
+          console.error('Error fetching profile:', response.status);
         }
       } catch (error) {
-        Alert.alert('Error', error.message);
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchUserData();
   }, []);
 
-  const handleUpdate = async () => {
-   setLoading(true)
-    try {
-      if (name.length > 0 && email.length > 0) {
-        const userId = auth().currentUser.uid;
-        const userData = {
-          name,
-          email,
-          address,
-          phone,
-          mcNumber,
-          dotNumber,
-          supportNumber,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        };
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     const userId = auth().currentUser.uid;
 
-        await firestore().collection('Users').doc(userId).set(userData, { merge: true });
-        Alert.alert("Profile updated successfully!");
-      } else {
-        Alert.alert('Please fill in all required fields');
-      }
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', error.message);
-    }finally{
-      setLoading(false)
-    }
-  };
+  //     try {
+  //       const userDoc = await firestore().collection('Users').doc(userId).get();
+
+  //       if (userDoc.exists) {
+  //         const data = userDoc.data();
+  //         setName(data.name);
+  //         setAddress(data.address);
+  //         setPhone(data.phone);
+  //         setMcNumber(data.mcNumber);
+  //         setDotNumber(data.dotNumber);
+  //         setSupportNumber(data.supportNumber);
+  //         setEmail(data.email)
+  //       }
+  //     } catch (error) {
+  //       Alert.alert('Error', error.message);
+  //     }
+  //   };
+
+  //   fetchUserData();
+  // }, []);
+
+  // const handleUpdate = async () => {
+  //  setLoading(true)
+  //   try {
+  //     if (name.length > 0 && email.length > 0) {
+  //       const userId = auth().currentUser.uid;
+  //       const userData = {
+  //         name,
+  //         email,
+  //         address,
+  //         phone,
+  //         mcNumber,
+  //         dotNumber,
+  //         supportNumber,
+  //         updatedAt: firestore.FieldValue.serverTimestamp(),
+  //       };
+
+  //       await firestore().collection('Users').doc(userId).set(userData, { merge: true });
+  //       Alert.alert("Profile updated successfully!");
+  //     } else {
+  //       Alert.alert('Please fill in all required fields');
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     Alert.alert('Error', error.message);
+  //   }finally{
+  //     setLoading(false)
+  //   }
+  // };
 
   
-  const OnLogout = () => {
-    
-
-    auth().signOut()
-      .then(response => {
-        Alert.alert("User Signed Out!")
-        logout()
-        // navigation.navigate("AuthStack")
-      }).catch(error => {
-        console.log(error.message)
-        Alert.alert("Not able to logout!")
-      });
+  const logoutUser = async () => {
+    try {
+     
+      await AsyncStorage.removeItem('authtoken');
+      
+      // Call the logout function from LoginContext
+      logout();
+      console.log("logout successful")
+      // // Optionally navigate to a different screen after logout
+      // navigation.navigate('Login'); // Adjust to your desired screen
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
-
 
   return (
    
@@ -118,7 +162,7 @@ export default function AccountScreen() {
           <View style={styles.BoxContainer}>
             <TextInput style={styles.johndoe}
               value={name}
-              onChangeText={value => setName(value)}
+              onChangeText={setName}
               placeholder='johndoe*,'
             />
           </View>
@@ -139,7 +183,7 @@ export default function AccountScreen() {
           <View style={styles.BoxContainer}>
             <TextInput style={styles.johndoe}
               value={phone}
-              onChangeText={value => setPhone(value)}
+              onChangeText={setPhone}
               placeholder='8057545XX'
               placeholderTextColor={'#757575'} />
           </View>
@@ -204,7 +248,7 @@ export default function AccountScreen() {
           
       ): (
         <View style={styles.ResumeView}>
-          <TouchableOpacity onPress={handleUpdate}>
+          <TouchableOpacity >
             <View style={styles.verifyConatiner}>
               <Text style={styles.verifyText}>Save</Text>
             </View>
@@ -213,7 +257,7 @@ export default function AccountScreen() {
       )
     }
         <View style={styles.ResumeView1}>
-          <TouchableOpacity onPress={ OnLogout}>
+          <TouchableOpacity onPress={logoutUser}>
             <View style={styles.verifyConatiner1}>
               <Text style={styles.verifyText1}>Log Out</Text>
             </View>

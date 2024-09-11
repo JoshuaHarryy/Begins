@@ -8,238 +8,63 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import useOrientation from '../Hooks/useOrientation';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import { AccessToken, LoginManager } from 'react-native-fbsdk-next';
 import { useLogin } from '../context/LoginProvider';
 import { ActivityIndicator } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
 const SignupSchema = Yup.object().shape({
-  
+
   name: Yup.string()
-    .min(3, 'Too Short!')
-    .max(15, 'Too Long!')
-    .required('Please enter your name'),
+    .min(3, 'First Name must be at least 3 characters')
+    .max(15, 'First Name must be at most 15 characters')
+    .required('First Name is required'),
+  lastName: Yup.string()
+    .min(3, 'Last Name must be at least 3 characters')
+    .max(15, 'Last Name must be at most 15 characters')
+    .required('Last Name is required'),
+  phone: Yup.string()
+    .matches(/^[0-9]{10}$/, 'Phone Number must be exactly 10 digits')
+    .required('Phone Number is required'),
   email: Yup.string()
-    .email('Invalid email')
-    .required('Please enter your email address'),
+    .email('Invalid email address')
+    .required('Email is required'),
   password: Yup.string()
-    .min(6, 'Must contain minimum 6 characters')
-    .required('Please enter your password'),
-  confirmPassword: Yup.string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
+  confirm: Yup.string()
     .oneOf([Yup.ref('password'), null], 'Passwords must match')
-    .required('Please confirm your password')
+    .required('Confirm Password is required'),
 });
 
 const Signupscreen = () => {
-  
-  GoogleSignin.configure({
-    webClientId: '1081204046823-2kk1sbc0bomnhn7r0a9ead74oglsc31r.apps.googleusercontent.com',
-    offlineAccess: true, 
-  });
 
   const orientation = useOrientation();
   const navigation = useNavigation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState();
-  const [confirmPassword, setConfirmPassword] = useState();
-  const [error, setError] = useState('');
-    const [isloading, setLoading] = useState(false);
+  const [isloading, setLoading] = useState(false);
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [isDrawerOpen, setDrawerOpen] = useState(false); // State for dropdown
+  const [selectedOption, setSelectedOption] = useState(null); // Store selected option
 
-  const handleLogin = async () => {
-    setLoading(true);
-    try {
-      if (email.length > 0 && password.length > 0 && name.length > 0) {
-        const isUserCreated = await auth().createUserWithEmailAndPassword(email, password)
-          .then(async (userCredentials) => {
-            const userData = {
-              name,
-              email: userCredentials.user.email,
-              uid: userCredentials.user.uid,
-              address: '',
-              phone: '',
-              mcNumber: '',
-              dotNumber: '',
-              supportNumber: '',
-              createdAt: firestore.FieldValue.serverTimestamp(),
-              updatedAt: firestore.FieldValue.serverTimestamp(),
-            };
-            await firestore().collection("Users").doc(userCredentials.user.uid).set(userData);
-            console.log(userCredentials);
-            Alert.alert("Signup successful!");
-            await auth().currentUser.sendEmailVerification();
-            await auth().signOut();
-            Alert.alert('Please verify your email. Check the link in your inbox.');
-            navigation.navigate('Login');
-          })
-          .catch((error) => {
-            if (error.code === 'auth/email-already-in-use') {
-              Alert.alert('Email already in use', 'The email address is already registered. Please use a different email or log in.');
-            } else if (error.code === 'auth/invalid-email') {
-              Alert.alert('Invalid Email', 'The email address is not valid. Please enter a valid email.');
-            } else if (error.code === 'auth/weak-password') {
-              Alert.alert('Weak Password', 'The password is too weak. Please enter a stronger password.');
-            } else {
-              Alert.alert('Error', error.message);
-            }
-            console.log(error);
-          });
-      } else {
-        Alert.alert('Please Enter All Data', 'All fields are required. Please fill in all the details.');
-      }
-    } catch (error) {
-      console.log(error.message);
-      Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false); 
-    }
+  const toggleDrawer = () => {
+    setDrawerOpen(!isDrawerOpen);
   };
+
+  const selectOption = (option) => {
+    setSelectedOption(option);
+    setDrawerOpen(false); // Close drawer after selecting
+  };
+
 
   const togglePasswordVisibility = () => {
     setSecureTextEntry(!secureTextEntry);
   };
-  const {login} = useLogin()
-  const signIn = async () => {
-    
-    try {
-      
-      await GoogleSignin.hasPlayServices();
-  
-     
-      await GoogleSignin.signOut(); // Add this line
-  
-      
-      const { idToken } = await GoogleSignin.signIn();
-  
-      
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-  
-      
-      const userCredential = await auth().signInWithCredential(googleCredential);
-  
-     
-      console.log("Google Sign-In successful:", userCredential.user);
-  
-      
-      const userDoc = await firestore().collection("Users").doc(userCredential.user.uid).get();
-  
-      if (!userDoc.exists) {
-        
-        const userData = {
-          name: userCredential.user.displayName || '',
-          email: userCredential.user.email,
-          uid: userCredential.user.uid,
-          address: '',
-          phone: '',
-          mcNumber: '',
-          dotNumber: '',
-          supportNumber: '',
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        };
-  
-        console.log("Saving user data to Firestore:", userData);
-  
-        await firestore().collection("Users").doc(userCredential.user.uid).set(userData)
-          .then(() => {
-            console.log("User data saved successfully!");
-          })
-          .catch((error) => {
-            console.error("Error saving user data:", error);
-            Alert.alert("Error", "Failed to save user data to Firestore. Please try again.");
-          });
-      } else {
-        console.log("User already exists in Firestore.");
-      }
-      login();
-      Alert.alert("Login successful!");
 
-     
-    } catch (error) {
-      console.error("Error during Google Sign-In:", error); // Print full error
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert("Google Sign-In cancelled.");
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        Alert.alert("Google Sign-In is in progress.");
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert("Google Play Services not available.");
-      } else {
-        Alert.alert("Error", error.message);
-      }
-    }
-  };
-
-  const signInWithFacebook = async () => {
-    try {
-      // Attempt login with Facebook
-      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
-
-      if (result.isCancelled) {
-        throw 'User cancelled the login process';
-      }
-
-      // Get the access token
-      const data = await AccessToken.getCurrentAccessToken();
-
-      if (!data) {
-        throw 'Something went wrong obtaining access token';
-      }
-
-      // Create a Facebook credential with the token
-      const facebookCredential = auth.FacebookAuthProvider.credential(data.accessToken);
-
-      // Sign in with the credential
-      const userCredential = await auth().signInWithCredential(facebookCredential);
-
-      console.log("Facebook Sign-In successful:", userCredential.user);
-
-      // Check if the user already exists in Firestore
-      const userDoc = await firestore().collection("Users").doc(userCredential.user.uid).get();
-
-      if (!userDoc.exists) {
-        const userData = {
-          name: userCredential.user.displayName || '',
-          email: userCredential.user.email,
-          uid: userCredential.user.uid,
-          address: '',
-          phone: '',
-          mcNumber: '',
-          dotNumber: '',
-          supportNumber: '',
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        };
-
-        console.log("Saving user data to Firestore:", userData);
-
-        await firestore().collection("Users").doc(userCredential.user.uid).set(userData)
-          .then(() => {
-            console.log("User data saved successfully!");
-          })
-          .catch((error) => {
-            console.error("Error saving user data:", error);
-            Alert.alert("Error", "Failed to save user data to Firestore. Please try again.");
-          });
-      } else {
-        console.log("User already exists in Firestore.");
-      }
-      login();
-      Alert.alert("Login successful!");
-    } catch (error) {
-      console.log("Error during Facebook Sign-In:", error);
-      Alert.alert("Error", error.message || "Failed to sign in with Facebook. Please try again.");
-    }
-  };
-  
-  
   useEffect(() => {
     const backAction = () => {
       Alert.alert("Hold on!", "Are you sure you want to exit?", [
@@ -265,18 +90,70 @@ const Signupscreen = () => {
   }, []);
 
 
+  async function registerUser(values) {
+
+    setLoading(true);
+    const data = {
+      first_name: values.name,
+      last_name: values.lastName,
+      phone_number: values.phone,
+      email: values.email,
+      password: values.password,
+      confirm: values.confirm,
+      timezone: 'UTC'
+    };
+    console.log(values);
+    try {
+      const response = await fetch("https://staging.ardent-training.com/api/student-register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": "eyJpdiI6ImpDdHdQL0NHYzVNQmwwYmE0NFMxbnc9PSIsInZhbHVlIjoiRmZPN2poWjg4OHJkR2xjOGg5SDgwSmg5M0lXMUhXeFhzbUJZZ05hT21MMmd1TUlpUlhEMWo1ekJXU1dTMThnT0szYTlMSlQva3BoODc3cDJhS2sxZE5KMDhyR1U0VlhoSUp1Z3pVSEwydk9KZHpYbWg5SjNjUjdoVFZFem51UFlRK28yemRVZ2NxWVYvVEJTSHZNWEJROXM4NnFubFVaU09UNDZYWSs4REpvYVdjdldaWVFYYlpPZFlpOWc0Z2cvSHA0YXlQMWVJMWlSeEFWakU2TzVyTXljM0xsMmVtMm5lLzMwWlZEbUlCZER3REZMWko0dTNPZGFSak5LRkdFNCIsIm1hYyI6IjIxYzNkNTM3MjVhOGVkN2Q5YjFjMDU2ZjYwM2QzM2MxMzVkYWIzODEwYmEyZDg1ODJiZjViMzUzZmU5NDBmYmIiLCJ0YWciOiIifQ=="
+        },
+        body: JSON.stringify(data)
+      });
+      const result = await response.json();
+      if (response.ok) {
+        Alert.alert("Success", "Registration Successful!");
+        navigation.navigate("Login");
+      } else {
+        console.log("Server error: ", result);
+        Alert.alert("Error", result.message || "Registration failed");
+      }
+    } catch (error) {
+      console.log("Network or validation error: ", error.message)
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
   return (
     <Formik
-    initialValues={{
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    }}
-    validationSchema={SignupSchema}
-    onSubmit={handleLogin}
-  >
-    {({ values, errors, touched, handleChange, handleSubmit, setFieldTouched }) => (
+      initialValues={{
+        name: '',
+        lastName: '',
+        phone: '',
+        email: '',
+        password: '',
+        confirm: '',
+        timezone: 'UTC'
+      }}
+      validationSchema={SignupSchema}
+      validateOnMount={true}
+      onSubmit={async (values, { setSubmitting }) => {
+        console.log("Form Submitted: ", values);
+        setSubmitting(true);
+        try {
+          await registerUser(values);
+        } catch (error) {
+          console.error(error.message);
+        }
+        setSubmitting(false);
+      }}
+
+    >
+      {({ values, errors, touched, handleChange, handleSubmit, handleBlur, isSubmitting }) => (
 
 
 
@@ -294,17 +171,14 @@ const Signupscreen = () => {
 
 
             <View style={styles.BoxesmainView}>
-              <View style={styles.NameBox}>
+              <View style={styles.NameBox1}>
                 <FontAwesome name={"user-circle-o"} size={24} color={"#757575"} style={styles.IconUser} />
                 <TextInput
                   style={styles.TextName}
                   value={values.name}
-                  onChangeText={value => {
-                    setName(value);
-                    handleChange('name')(value);
-                  }}
-                  onBlur={() => setFieldTouched('name')}
-                  placeholder='Name'
+                  onChangeText={handleChange('name')}
+                  onBlur={handleBlur('name')}
+                  placeholder='First Name'
                   placeholderTextColor={'#757575'}
                 />
               </View>
@@ -312,18 +186,46 @@ const Signupscreen = () => {
                 <Text style={styles.errorText}>{errors.name}</Text>
               )}
             </View>
+            <View style={styles.BoxesmainView}>
+              <View style={styles.NameBox}>
+                <FontAwesome name={"user-circle-o"} size={24} color={"#757575"} style={styles.IconUser} />
+                <TextInput
+                  style={styles.TextName}
+                  value={values.lastName}
+                  onChangeText={handleChange('lastName')}
+                  onBlur={handleBlur('lastName')}
+                  placeholder='Last Name'
+                  placeholderTextColor={'#757575'}
+                />
+              </View>
+              {touched.lastName && errors.lastName && (
+                <Text style={styles.errorText}>{errors.lastName}</Text>
+              )}
+            </View>
 
 
+            <View style={styles.BoxesmainView}>
+              <View style={styles.EmailAddressBox}>
+                <Entypo name={"phone"} size={24} color={"#757575"} style={styles.IconUser} />
+                <TextInput style={styles.TextName}
+                  value={values.phone}
+                  onChangeText={handleChange('phone')}
+                  onBlur={handleBlur('phone')}
+                  placeholder='Phone Number'
+                  placeholderTextColor={'#757575'} />
+              </View>
+
+              {touched.phone && errors.phone && (
+                <Text style={styles.errorText}>{errors.phone} </Text>
+              )}
+            </View>
             <View style={styles.BoxesmainView}>
               <View style={styles.EmailAddressBox}>
                 <Entypo name={"mail"} size={24} color={"#757575"} style={styles.IconUser} />
                 <TextInput style={styles.TextName}
                   value={values.email}
-                  onChangeText={value => {
-                    setEmail(value);
-                    handleChange('email')(value);
-                  }}
-                  onBlur={() => setFieldTouched('email')}
+                  onChangeText={handleChange('email')}
+                  onBlur={handleBlur('email')}
                   placeholder='Email Address'
                   placeholderTextColor={'#757575'} />
               </View>
@@ -334,56 +236,91 @@ const Signupscreen = () => {
             </View>
 
             <View style={styles.BoxesmainView}>
-            <View style={styles.PasswordBox}>
-            <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
-            <TextInput style={styles.TextName}
-              value={password}
-              onChangeText={value => setPassword(value)}
-              placeholder='Password'
-              secureTextEntry={secureTextEntry}
-              placeholderTextColor={'#757575'} />
-            <TouchableOpacity onPress={togglePasswordVisibility}>
-              <Feather
-                name={secureTextEntry ? 'eye-off' : 'eye'}
-                size={24}
-                style={styles.inputIcon2}
-              />
-            </TouchableOpacity>
-          </View>
+              <View style={styles.PasswordBox}>
+                <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
+                <TextInput style={styles.TextName}
+                  value={values.password}
+                  onChangeText={handleChange('password')}
+                  placeholder='Password'
+                  onBlur={handleBlur('password')}
+                  secureTextEntry={secureTextEntry}
+                  placeholderTextColor={'#757575'} />
+                <TouchableOpacity onPress={togglePasswordVisibility}>
+                  <Feather
+                    name={secureTextEntry ? 'eye-off' : 'eye'}
+                    size={24}
+                    style={styles.inputIcon2}
+                  />
+                </TouchableOpacity>
+              </View>
               {touched.password && errors.password && (
                 <Text style={styles.errorText}>{errors.password} </Text>
               )}
             </View>
 
             <View style={styles.BoxesmainView}>
-            <View style={styles.ConfirmPasswordBox}>
-            <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
-            <TextInput style={styles.TextName}
-              value={confirmPassword}
-              onChangeText={value => setConfirmPassword(value)}
-              placeholder='Confirm Password'
-              secureTextEntry={secureTextEntry}
-              placeholderTextColor={'#757575'} />
-              <TouchableOpacity  onPress={togglePasswordVisibility}>
-             <Feather 
-             name={secureTextEntry ? 'eye-off' : 'eye'} 
-             size={24} 
-             style={styles.inputIcon2} />
-             </TouchableOpacity>
-          </View>
+              <View style={styles.ConfirmPasswordBox}>
+                <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
+                <TextInput style={styles.TextName}
+                  value={values.confirm}
+                  onChangeText={handleChange('confirm')}
+                  placeholder='Confirm Password'
+                  onBlur={handleBlur('confirm')}
+                  secureTextEntry={secureTextEntry}
+                  placeholderTextColor={'#757575'} />
+                <TouchableOpacity onPress={togglePasswordVisibility}>
+                  <Feather
+                    name={secureTextEntry ? 'eye-off' : 'eye'}
+                    size={24}
+                    style={styles.inputIcon2} />
+                </TouchableOpacity>
+              </View>
+              {touched.confirm && errors.confirm && (
+                <Text style={styles.errorText}>{errors.confirm}</Text>
+              )}
+            </View>
 
+            <View style={styles.BoxesmainView}>
+              <View style={styles.ConfirmPasswordBox}>
+                <Text style={styles.HearAboutUsText}>
+                  Where did you hear about us?
+                </Text>
+                <TouchableOpacity onPress={toggleDrawer}>
+                  <Feather name={isDrawerOpen ? 'arrow-up' : 'arrow-down'} size={24} style={styles.inputIcon2} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Dropdown List */}
+              {isDrawerOpen && (
+                <View style={styles.dropdown}>
+                  {['Social Media', 'From a Friend', 'Red Seas', 'Advertisement', 'RYA Instructor',
+                    'RYA Training Centre',
+                    'Yacht Club',
+                    'Magazine',
+                    'Prefer Not To Say',
+                    'Other'].map((option, index) => (
+                      <TouchableOpacity key={index} onPress={() => selectOption(option)} style={styles.option}>
+                        <Text style={styles.optionText}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              )}
             </View>
-            {isloading ?  (
-          <ActivityIndicator size="large" color="#00A170" style={styles.loading}/>
-      ): (
-            <View style={styles.SignupView}>
-              <TouchableOpacity style={styles.Signupbutton}
-                onPress={handleLogin}>
-                <Text style={styles.signupText}>Sign up</Text>
-              </TouchableOpacity>
-            </View>
-            
-          )}
+
+            {isloading ? (
+              <ActivityIndicator size="large" color="#00A170" style={styles.loading} />
+            ) : (
+              <View style={styles.SignupView}>
+                <TouchableOpacity style={styles.Signupbutton}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  <Text style={styles.signupText}>Sign up</Text>
+                </TouchableOpacity>
+                {isSubmitting && <ActivityIndicator />}
+              </View>
+
+            )}
 
             <View style={styles.connectText}>
               <Text style={styles.Connectvia}>Or connect via</Text>
@@ -391,16 +328,15 @@ const Signupscreen = () => {
 
             <View style={styles.twoboxes}>
               <TouchableOpacity
-              onPress={signIn} 
-              style={styles.googlebox}>
-              <View >
-                <AntDesign name={"google"} size={24} color={"#757575"} style={styles.GoogleIcon} />
-              </View>
+                style={styles.googlebox}>
+                <View >
+                  <AntDesign name={"google"} size={24} color={"#757575"} style={styles.GoogleIcon} />
+                </View>
               </TouchableOpacity>
-              <TouchableOpacity onPress={signInWithFacebook} style={styles.Facebookbox}>
-              <View >
-                <AntDesign name={"facebook-square"} size={24} color={"#757575"} style={styles.facebookIcon} />
-              </View>
+              <TouchableOpacity style={styles.Facebookbox}>
+                <View >
+                  <AntDesign name={"facebook-square"} size={24} color={"#757575"} style={styles.facebookIcon} />
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -420,17 +356,31 @@ const Signupscreen = () => {
             </View>
           </View>
         </ScrollView>
-      
-       
+
+
       )}
     </Formik>
-    
+
   )
 }
-
 export default Signupscreen
 
 const styles = StyleSheet.create({
+  dropdown: {
+    width: '85%',
+    borderWidth: 1,
+    borderColor: '#757575',
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+    marginTop: 5,
+  },
+  option: {
+    padding: 15,
+  },
+  optionText: {
+    fontSize: 16,
+    color: '#757575',
+  },
   container: {
     backgroundColor: '#FFFFFF',
     justifyContent: 'space-between',
@@ -482,6 +432,17 @@ const styles = StyleSheet.create({
   BoxesmainView: {
     alignItems: 'center',
   },
+  NameBox1: {
+    width: '85%',
+    height: 60,
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#757575',
+    borderRadius: 20,
+    marginTop: 40,
+    flexDirection: "row",
+    elevation: 4,
+  },
   NameBox: {
     width: '85%',
     height: 60,
@@ -489,8 +450,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#757575',
     borderRadius: 20,
-
-    marginTop: 30,
+    marginTop: 5,
     flexDirection: "row",
     elevation: 4,
 
@@ -500,10 +460,16 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginTop: 18
   },
-  inputIcon2:{
+  inputIcon2: {
     color: "green",
     marginRight: 20,
     marginTop: 15,
+    marginLeft: 35
+  },
+  HearAboutUsText: {
+    fontSize: 18,
+    marginLeft: 30,
+    marginTop: 15
   },
   TextName: {
     fontSize: 18,
@@ -654,7 +620,7 @@ const styles = StyleSheet.create({
     color: '#00A170',
 
   },
-loading:{
-  marginTop: 20 
-},
+  loading: {
+    marginTop: 20
+  },
 })

@@ -1,5 +1,5 @@
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Dimensions, Alert, ActivityIndicator } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Feather from 'react-native-vector-icons/Feather';
@@ -15,9 +15,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoginButton, AccessToken } from 'react-native-fbsdk-next';
 
 
+
 const Loginscreen = ({ navigation }) => {
-const {login} = useLogin()
-  
+  const { login } = useLogin();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,39 +26,80 @@ const {login} = useLogin()
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
 
-  const handleSignIn = () => {
+  // const handleSignIn = () => {
 
-   
+
+  //   if (!email || !password) {
+  //     Alert.alert("Error", "Please fill in all fields.");
+  //     return;
+  //   }
+  //   setLoading(true);
+
+  //   auth()
+  //     .signInWithEmailAndPassword(email, password)
+  //     .then(userCredentials => {
+  //       Alert.alert("Login In successful!")
+  //       console.log(userCredentials.user.email);
+
+  //       // navigation.replace('AppStack');
+
+  //     })
+  //     .catch(error => {
+  //       setLoading(false);
+  //       Alert.alert("Email & password are incorrect")
+  //       console.log(error)
+  //       setError(error.message);
+
+  //     });
+
+  // };
+
+  const togglePasswordVisibility = () => {
+    setSecureTextEntry(!secureTextEntry);
+  };
+  const orientation = useOrientation();
+
+
+
+  async function loginUser(navigation) {
+    setLoading(true)
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
-    setLoading(true);
-    
-    auth()
-      .signInWithEmailAndPassword(email, password)
-      .then(userCredentials => {
-        Alert.alert("Login In successful!")
-        console.log(userCredentials.user.email);
-        login()
-        // navigation.replace('AppStack');
-       
-      })
-      .catch(error => {
-        setLoading(false);
-        Alert.alert("Email & password are incorrect")
-        console.log(error)
-        setError(error.message);
-        
+    const data = {
+      email: email,
+      password:password
+    }
+    console.log(data)
+    try {
+      const response = await fetch("https://staging.ardent-training.com/api/student-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": "eyJpdiI6ImpDdHdQL0NHYzVNQmwwYmE0NFMxbnc9PSIsInZhbHVlIjoiRmZPN2poWjg4OHJkR2xjOGg5SDgwSmg5M0lXMUhXeFhzbUJZZ05hT21MMmd1TUlpUlhEMWo1ekJXU1dTMThnT0szYTlMSlQva3BoODc3cDJhS2sxZE5KMDhyR1U0VlhoSUp1Z3pVSEwydk9KZHpYbWg5SjNjUjdoVFZFem51UFlRK28yemRVZ2NxWVYvVEJTSHZNWEJROXM4NnFubFVaU09UNDZYWSs4REpvYVdjdldaWVFYYlpPZFlpOWc0Z2cvSHA0YXlQMWVJMWlSeEFWakU2TzVyTXljM0xsMmVtMm5lLzMwWlZEbUlCZER3REZMWko0dTNPZGFSak5LRkdFNCIsIm1hYyI6IjIxYzNkNTM3MjVhOGVkN2Q5YjFjMDU2ZjYwM2QzM2MxMzVkYWIzODEwYmEyZDg1ODJiZjViMzUzZmU5NDBmYmIiLCJ0YWciOiIifQ=="
+        },
+        body: JSON.stringify(data)
       });
-      
-  };
-  
-  const togglePasswordVisibility = () => {
-    setSecureTextEntry(!secureTextEntry);
-  };
+     
+      if (response.ok) {
+        const result = await response.json();
+        console.log(result);
+        const token = result.token;
+        await AsyncStorage.setItem('authtoken', token);
+        console.log("login successful, token Saved!")
+        Alert.alert("Success", "Login Successful!");
+        login();
+      } else {
+        console.log("Server error: ", result);
+        Alert.alert("Error", result.message || "Login failed");
+      }
+    } catch (error) {
 
-  const orientation = useOrientation();
+    } finally {
+      setLoading(false)
+    }
+  }
   return (
 
     <ScrollView contentContainerStyle={styles.container}>
@@ -74,7 +116,7 @@ const {login} = useLogin()
             <AntDesign name={"mail"} size={24} color={"#757575"} style={styles.inputIcon} />
             <TextInput style={styles.Textinput}
               value={email}
-              onChangeText={value => setEmail(value)}
+              onChangeText={setEmail}
               placeholder='Email Address'
               placeholderTextColor={'#757575'} />
           </View>
@@ -82,7 +124,7 @@ const {login} = useLogin()
             <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
             <TextInput style={styles.Textinput}
               value={password}
-              onChangeText={value => setPassword(value)}
+              onChangeText={setPassword}
               placeholder='Password'
               secureTextEntry={secureTextEntry}
               placeholderTextColor={'#757575'} />
@@ -101,16 +143,16 @@ const {login} = useLogin()
           <Text style={orientation === 'landscape' ? styles.ForgetPassLandscape : styles.ForgetPassPortrait}>Forgot Password?</Text>
         </TouchableOpacity>
 
-{loading? (
-  <ActivityIndicator size="large" color="#00A170" style={styles.loading} />
-): (
-        <TouchableOpacity onPress={handleSignIn}>
-          <View style={styles.LoginView}>
-            <View style={styles.logincontainer}>
-              <Text style={styles.loginText}>Log In</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color="#00A170" style={styles.loading} />
+        ) : (
+          <TouchableOpacity onPress={loginUser}>
+            <View style={styles.LoginView}>
+              <View style={styles.logincontainer}>
+                <Text style={styles.loginText}>Log In</Text>
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
         )}
 
         <View style={styles.connectView}>
@@ -331,8 +373,8 @@ const styles = StyleSheet.create({
     color: '#00A170',
 
   },
-  loading:{
+  loading: {
     marginVertical: 20,
-    flex : 1,
+    flex: 1,
   },
 })
