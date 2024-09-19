@@ -17,7 +17,7 @@ import { LoginButton, AccessToken } from 'react-native-fbsdk-next';
 
 
 const Loginscreen = ({ navigation }) => {
-  const { login } = useLogin();
+  
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -89,7 +89,7 @@ const Loginscreen = ({ navigation }) => {
         await AsyncStorage.setItem('authtoken', token);
         console.log("login successful, token Saved!")
         Alert.alert("Success", "Login Successful!");
-        login();
+      
       } else {
         console.log("Server error: ", result);
         Alert.alert("Error", result.message || "Login failed");

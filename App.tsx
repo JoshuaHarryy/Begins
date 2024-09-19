@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -15,10 +15,14 @@ import IFTAScreen from './src/screens/IFTAScreen';
 import ExpenseScreen from './src/screens/ExpenseScreen';
 import ElectronicLogScreen from './src/screens/ElectronicLogScreen';
 import LoginProvider, { useLogin } from './src/context/LoginProvider';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Settings } from 'react-native-fbsdk-next';
 import SplashScreen from './src/screens/SplashScreen';
+import { store } from './src/Redux/storeRedux' // Import the Redux store
+import {Provider, useSelector, useDispatch } from 'react-redux';
+import { checkToken } from './src/Redux/authSlice';
+import { RootState, AppDispatch } from './src/redux/store';
+
 
 Settings.setAppID('7935311009913194');
 Settings.initializeSDK();
@@ -50,22 +54,28 @@ const AppStack = () => (
 );
 
 const MainApp = () => {
+  const dispatch = useDispatch<AppDispatch>();
 
+  // Access the token from Redux to determine if the user is logged in
+  const token = useSelector((state: RootState) => state.auth.token);
 
-  const { isLoggedIn } = useLogin();
-  console.log('Is user logged in:', isLoggedIn); 
+  // Check if token exists in AsyncStorage on app load
+  useEffect(() => {
+    dispatch(checkToken());
+  }, [dispatch]);
 
   return (
     <NavigationContainer>
-      {isLoggedIn ? <AppStack /> : <AuthStack />}
+      {token ? <AppStack /> : <AuthStack />}
     </NavigationContainer>
   );
 };
 
 const App = () => (
-  <LoginProvider>
+  // Provide the Redux store to the app
+  <Provider store={store}>
     <MainApp />
-  </LoginProvider>
+  </Provider>
 );
 
 export default App;

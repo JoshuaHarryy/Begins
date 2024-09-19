@@ -6,28 +6,24 @@ import Feather from 'react-native-vector-icons/Feather';
 import Entypo from 'react-native-vector-icons/Entypo';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
-import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import { scale, verticalScale } from 'react-native-size-matters';
 import useOrientation from '../Hooks/useOrientation';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { useLogin } from '../context/LoginProvider';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser } from '../Redux/authSlice';
 import { ActivityIndicator } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-
 
 const SignupSchema = Yup.object().shape({
-
-  name: Yup.string()
+  first_name: Yup.string()
     .min(3, 'First Name must be at least 3 characters')
     .max(15, 'First Name must be at most 15 characters')
     .required('First Name is required'),
-  lastName: Yup.string()
+  last_name: Yup.string()
     .min(3, 'Last Name must be at least 3 characters')
     .max(15, 'Last Name must be at most 15 characters')
     .required('Last Name is required'),
-  phone: Yup.string()
+  phone_number: Yup.string()
     .matches(/^[0-9]{10}$/, 'Phone Number must be exactly 10 digits')
     .required('Phone Number is required'),
   email: Yup.string()
@@ -37,19 +33,25 @@ const SignupSchema = Yup.object().shape({
     .min(6, 'Password must be at least 6 characters')
     .required('Password is required'),
   confirm: Yup.string()
-    .oneOf([Yup.ref('password'), null], 'Passwords must match')
-    .required('Confirm Password is required'),
+    .oneOf([Yup.ref('password'), null], 'Passwords must match'),
+  timezone: Yup.string().default('UTC')  // Ensure timezone is handled
 });
 
 const Signupscreen = () => {
-
   const orientation = useOrientation();
   const navigation = useNavigation();
-  const [isloading, setLoading] = useState(false);
-
   const [secureTextEntry, setSecureTextEntry] = useState(true);
-  const [isDrawerOpen, setDrawerOpen] = useState(false); // State for dropdown
-  const [selectedOption, setSelectedOption] = useState(null); // Store selected option
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [timezone, setTimezone] = useState('');  // Example: 'et'
+  const dispatch = useDispatch();
+
+  const [isloading, setLoading] = useState(false);
 
   const toggleDrawer = () => {
     setDrawerOpen(!isDrawerOpen);
@@ -57,9 +59,8 @@ const Signupscreen = () => {
 
   const selectOption = (option) => {
     setSelectedOption(option);
-    setDrawerOpen(false); // Close drawer after selecting
+    setDrawerOpen(false);
   };
-
 
   const togglePasswordVisibility = () => {
     setSecureTextEntry(!secureTextEntry);
@@ -89,51 +90,39 @@ const Signupscreen = () => {
     return () => backHandler.remove();
   }, []);
 
-
-  async function registerUser(values) {
-
-    setLoading(true);
-    const data = {
-      first_name: values.name,
-      last_name: values.lastName,
-      phone_number: values.phone,
+  const handleRegister = (values) => {
+    const userData = {
+      first_name: values.first_name,
+      last_name: values.last_name,
       email: values.email,
       password: values.password,
-      confirm: values.confirm,
-      timezone: 'UTC'
+      phone_number: values.phone_number,
+      timezone: values.timezone || "UTC",
     };
-    console.log(values);
-    try {
-      const response = await fetch("https://staging.ardent-training.com/api/student-register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": "eyJpdiI6ImpDdHdQL0NHYzVNQmwwYmE0NFMxbnc9PSIsInZhbHVlIjoiRmZPN2poWjg4OHJkR2xjOGg5SDgwSmg5M0lXMUhXeFhzbUJZZ05hT21MMmd1TUlpUlhEMWo1ekJXU1dTMThnT0szYTlMSlQva3BoODc3cDJhS2sxZE5KMDhyR1U0VlhoSUp1Z3pVSEwydk9KZHpYbWg5SjNjUjdoVFZFem51UFlRK28yemRVZ2NxWVYvVEJTSHZNWEJROXM4NnFubFVaU09UNDZYWSs4REpvYVdjdldaWVFYYlpPZFlpOWc0Z2cvSHA0YXlQMWVJMWlSeEFWakU2TzVyTXljM0xsMmVtMm5lLzMwWlZEbUlCZER3REZMWko0dTNPZGFSak5LRkdFNCIsIm1hYyI6IjIxYzNkNTM3MjVhOGVkN2Q5YjFjMDU2ZjYwM2QzM2MxMzVkYWIzODEwYmEyZDg1ODJiZjViMzUzZmU5NDBmYmIiLCJ0YWciOiIifQ=="
-        },
-        body: JSON.stringify(data)
+  
+    console.log('User data:', userData); // Log data being sent
+  
+    setLoading(true); // Set loading state
+  
+    dispatch(registerUser(userData))
+      .then(response => {
+        console.log('Registration response:', response);
+        setLoading(false); // Stop loading
+        // Handle successful registration
+      })
+      .catch(error => {
+        console.error('Detailed Registration Error:', error);
+        Alert.alert('Registration failed', `Error: ${JSON.stringify(error)}`);
+        setLoading(false)
       });
-      const result = await response.json();
-      if (response.ok) {
-        Alert.alert("Success", "Registration Successful!");
-        navigation.navigate("Login");
-      } else {
-        console.log("Server error: ", result);
-        Alert.alert("Error", result.message || "Registration failed");
-      }
-    } catch (error) {
-      console.log("Network or validation error: ", error.message)
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  };
 
   return (
     <Formik
       initialValues={{
-        name: '',
-        lastName: '',
-        phone: '',
+        first_name: '',
+        last_name: '',
+        phone_number: '',
         email: '',
         password: '',
         confirm: '',
@@ -141,16 +130,7 @@ const Signupscreen = () => {
       }}
       validationSchema={SignupSchema}
       validateOnMount={true}
-      onSubmit={async (values, { setSubmitting }) => {
-        console.log("Form Submitted: ", values);
-        setSubmitting(true);
-        try {
-          await registerUser(values);
-        } catch (error) {
-          console.error(error.message);
-        }
-        setSubmitting(false);
-      }}
+      onSubmit={handleRegister}
 
     >
       {({ values, errors, touched, handleChange, handleSubmit, handleBlur, isSubmitting }) => (
@@ -175,9 +155,9 @@ const Signupscreen = () => {
                 <FontAwesome name={"user-circle-o"} size={24} color={"#757575"} style={styles.IconUser} />
                 <TextInput
                   style={styles.TextName}
-                  value={values.name}
-                  onChangeText={handleChange('name')}
-                  onBlur={handleBlur('name')}
+                  value={values.first_name}
+                  onChangeText={handleChange('first_name')}
+                  onBlur={handleBlur('first_name')}
                   placeholder='First Name'
                   placeholderTextColor={'#757575'}
                 />
@@ -191,8 +171,8 @@ const Signupscreen = () => {
                 <FontAwesome name={"user-circle-o"} size={24} color={"#757575"} style={styles.IconUser} />
                 <TextInput
                   style={styles.TextName}
-                  value={values.lastName}
-                  onChangeText={handleChange('lastName')}
+                  value={values.last_name}
+                  onChangeText={handleChange('last_name')}
                   onBlur={handleBlur('lastName')}
                   placeholder='Last Name'
                   placeholderTextColor={'#757575'}
@@ -208,9 +188,9 @@ const Signupscreen = () => {
               <View style={styles.EmailAddressBox}>
                 <Entypo name={"phone"} size={24} color={"#757575"} style={styles.IconUser} />
                 <TextInput style={styles.TextName}
-                  value={values.phone}
-                  onChangeText={handleChange('phone')}
-                  onBlur={handleBlur('phone')}
+                  value={values.phone_number}
+                  onChangeText={handleChange('phone_number')}
+                  onBlur={handleBlur('phone_number')}
                   placeholder='Phone Number'
                   placeholderTextColor={'#757575'} />
               </View>
@@ -262,8 +242,6 @@ const Signupscreen = () => {
               <View style={styles.ConfirmPasswordBox}>
                 <Fontisto name={"locked"} size={24} color={"#757575"} style={styles.inputIcon} />
                 <TextInput style={styles.TextName}
-                  value={values.confirm}
-                  onChangeText={handleChange('confirm')}
                   placeholder='Confirm Password'
                   onBlur={handleBlur('confirm')}
                   secureTextEntry={secureTextEntry}
@@ -312,7 +290,7 @@ const Signupscreen = () => {
             ) : (
               <View style={styles.SignupView}>
                 <TouchableOpacity style={styles.Signupbutton}
-                  onPress={handleSubmit}
+                  onPress={() => handleRegister(values)}
                   disabled={isSubmitting}
                 >
                   <Text style={styles.signupText}>Sign up</Text>

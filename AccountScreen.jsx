@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator } from 'react-native'
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator, Modal } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -25,12 +25,58 @@ export default function AccountScreen() {
   const [mcNumber, setMcNumber] = useState('');
   const [dotNumber, setDotNumber] = useState('');
   const [supportNumber, setSupportNumber] = useState('');
-  const [email, setEmail] = useState();  // Fetch the current user's email from auth
+  const [email, setEmail] = useState(); 
   const [Loading, setLoading] = useState();
-  const [profileData, setProfileData] = useState({
-    name : '',
-    email :'',
-  })
+  const [modalVisible, setModalVisible] = useState(false);
+  const [addressDetails, setAddressDetails] = useState({
+    country: '',
+    state: '',
+    city: '',
+    postcode: '',
+    addressLine1: '',
+    addressLine2: '',
+  });
+
+  const handleInputChange = (field, value) => {
+    setAddressDetails((prevState) => ({
+      ...prevState,
+      [field]: value,
+    }));
+  };
+
+  const handleSave = async () => {
+    const token = await AsyncStorage.getItem('token'); // Get the stored token
+  
+    try {
+      const response = await fetch('https://staging.ardent-training.com/api/student-profile', {
+        method: 'POST', // or 'PATCH', depending on your API
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Pass the token for authentication
+        },
+        body: JSON.stringify({
+          country: addressDetails.country,
+          state: addressDetails.state,
+          city: addressDetails.city,
+          postcode: addressDetails.postcode,
+          address_line_1: addressDetails.addressLine1,
+          address_line_2: addressDetails.addressLine2,
+        }),
+      });
+  
+      const result = await response.json();
+      console.log('API Response:', result);
+      if (response.ok) {
+        Alert.alert('Success', 'Address details updated successfully!');
+      } else {
+        Alert.alert('Error', `Failed to update details: ${result.message}`);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while updating the address details.');
+    }
+  
+    setModalVisible(false);
+  };
 
   
   useEffect(() => {
@@ -54,9 +100,9 @@ export default function AccountScreen() {
         if (response.ok) {
           const result = await response.json();
           console.log('Profile data:', result); 
-          setName(result.first_name);  
-          setPhone(result.phone_number);
-          setEmail(result.email);
+          setName(result.data.name);  
+          setPhone(result.data.student_detail.phone_number);
+          setEmail(result.data.email);
          
         } else {
           console.error('Error fetching profile:', response.status);
@@ -70,59 +116,7 @@ export default function AccountScreen() {
     fetchUserData();
   }, []);
 
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     const userId = auth().currentUser.uid;
-
-  //     try {
-  //       const userDoc = await firestore().collection('Users').doc(userId).get();
-
-  //       if (userDoc.exists) {
-  //         const data = userDoc.data();
-  //         setName(data.name);
-  //         setAddress(data.address);
-  //         setPhone(data.phone);
-  //         setMcNumber(data.mcNumber);
-  //         setDotNumber(data.dotNumber);
-  //         setSupportNumber(data.supportNumber);
-  //         setEmail(data.email)
-  //       }
-  //     } catch (error) {
-  //       Alert.alert('Error', error.message);
-  //     }
-  //   };
-
-  //   fetchUserData();
-  // }, []);
-
-  // const handleUpdate = async () => {
-  //  setLoading(true)
-  //   try {
-  //     if (name.length > 0 && email.length > 0) {
-  //       const userId = auth().currentUser.uid;
-  //       const userData = {
-  //         name,
-  //         email,
-  //         address,
-  //         phone,
-  //         mcNumber,
-  //         dotNumber,
-  //         supportNumber,
-  //         updatedAt: firestore.FieldValue.serverTimestamp(),
-  //       };
-
-  //       await firestore().collection('Users').doc(userId).set(userData, { merge: true });
-  //       Alert.alert("Profile updated successfully!");
-  //     } else {
-  //       Alert.alert('Please fill in all required fields');
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     Alert.alert('Error', error.message);
-  //   }finally{
-  //     setLoading(false)
-  //   }
-  // };
+ 
 
   
   const logoutUser = async () => {
@@ -162,22 +156,96 @@ export default function AccountScreen() {
           <View style={styles.BoxContainer}>
             <TextInput style={styles.johndoe}
               value={name}
-              onChangeText={setName}
+              onChangeText={(name)=>setName(name)}
               placeholder='johndoe*,'
             />
           </View>
         </View>
 
         <Text style={styles.addressText}>Address</Text>
-        <View style={styles.BoxesView}>
-          <View style={styles.BoxContainer2}>
-            <TextInput style={styles.johndoe}
-              value={address}
-              onChangeText={value => setAddress(value)}
-              placeholder='123 Main StreetAnytown,'
-            />
+        <View style={styles.container}>
+      {/* Address input field that opens modal on focus */}
+      <View style={styles.BoxesView}>
+        <View style={styles.BoxContainer2}>
+          <TextInput
+            style={styles.johndoe}
+            value={addressDetails.addressLine1}
+            onFocus={() => setModalVisible(true)} // Open modal when focused
+            placeholder="123 Main Street, Anytown"
+          />
+        </View>
+      </View>
+
+      {/* Modal for filling additional address details */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <ScrollView style={styles.scrollContainer}>
+              <Text style={styles.modalTitle}>Enter Address Details</Text>
+
+             
+              <TextInput
+                style={styles.input}
+                placeholder="Country *"
+                value={addressDetails.country}
+                onChangeText={(value) => handleInputChange('country', value)}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="State *"
+                value={addressDetails.state}
+                onChangeText={(value) => handleInputChange('state', value)}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="City *"
+                value={addressDetails.city}
+                onChangeText={(value) => handleInputChange('city', value)}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Postcode / ZIP *"
+                keyboardType="numeric"
+                value={addressDetails.postcode}
+                onChangeText={(value) => handleInputChange('postcode', value)}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Address Line 1 *"
+                value={addressDetails.addressLine1}
+                onChangeText={(value) => handleInputChange('addressLine1', value)}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Address Line 2"
+                value={addressDetails.addressLine2}
+                onChangeText={(value) => handleInputChange('addressLine2', value)}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                  <Text style={styles.buttonText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
+      </Modal>
+    </View>
+        
         <Text style={styles.PhoneText}>Phone </Text>
         <View style={styles.BoxesView}>
           <View style={styles.BoxContainer}>
@@ -269,6 +337,58 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: 300,
+    alignItems: 'center',
+  },
+  scrollContainer: {
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  input: {
+    width: '100%',
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#f44336',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginLeft: 5,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+
   Headercontainer: {
     width: '100%',
     height: 120,
